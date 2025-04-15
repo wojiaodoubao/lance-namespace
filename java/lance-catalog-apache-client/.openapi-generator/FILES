@@ -1,9 +1,10 @@
 .openapi-generator-ignore
 README.md
-api/openapi.yaml
+docs/CreateNamespaceRequest.md
+docs/CreateNamespaceResponse.md
 docs/DefaultApi.md
-gradle/wrapper/gradle-wrapper.jar
-gradle/wrapper/gradle-wrapper.properties
+docs/ErrorModel.md
+docs/NamespaceApi.md
 pom.xml
 src/main/AndroidManifest.xml
 src/main/java/com/lancedb/lance/catalog/client/apache/ApiClient.java
@@ -20,4 +21,6 @@ src/main/java/com/lancedb/lance/catalog/client/apache/auth/ApiKeyAuth.java
 src/main/java/com/lancedb/lance/catalog/client/apache/auth/Authentication.java
 src/main/java/com/lancedb/lance/catalog/client/apache/auth/HttpBasicAuth.java
 src/main/java/com/lancedb/lance/catalog/client/apache/auth/HttpBearerAuth.java
-src/test/java/com/lancedb/lance/catalog/client/apache/api/DefaultApiTest.java
+src/main/java/com/lancedb/lance/catalog/client/apache/model/CreateNamespaceRequest.java
+src/main/java/com/lancedb/lance/catalog/client/apache/model/CreateNamespaceResponse.java
+src/main/java/com/lancedb/lance/catalog/client/apache/model/ErrorModel.java
