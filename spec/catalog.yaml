@@ -83,8 +83,26 @@ paths:
         5XX:
           $ref: '#/components/responses/ServerErrorResponse'
 
-components:
+    get:
+      tags: [ Namespace ]
+      summary: >
+        List all namespaces in the catalog.
+      operationId: listNamespaces
+      responses:
+        200:
+          $ref: '#/components/responses/ListNamespacesResponse'
+        400:
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        403:
+          $ref: '#/components/responses/ForbiddenResponse'
+        406:
+          $ref: '#/components/responses/UnsupportedOperationResponse'
+        503:
+          $ref: '#/components/responses/ServiceUnavailableResponse'
+        5XX:
+          $ref: '#/components/responses/ServerErrorResponse'
 
+components:
   schemas:
     ErrorModel:
       type: object
@@ -142,6 +160,17 @@ components:
           example: { "created_at": "1452120468" }
           default: { }
 
+    ListNamespacesResponse:
+      type: object
+      properties:
+        namespaces:
+          description: An array of namespace names in the catalog.
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            example: "accounting"
+
   responses:
     CreateNamespaceResponse:
       description:
@@ -157,6 +186,18 @@ components:
             "namespace": [ "lance.ns1" ],
             "properties": { "created_at": "1452120468" }
           }
+
+    ListNamespacesResponse:
+      description: A list of namespaces
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ListNamespacesResponse'
+          examples:
+            NonEmptyResponse:
+              $ref: '#/components/examples/ListNamespacesNonEmptyExample'
+            EmptyResponse:
+              $ref: '#/components/examples/ListNamespacesEmptyExample'
 
     BadRequestErrorResponse:
       description:
@@ -236,3 +277,19 @@ components:
             "detail": "",
             "instance": "/v1/namespaces"
           }
+
+  examples:
+    ListNamespacesEmptyExample:
+      summary: An empty list of namespaces
+      value: {
+        "namespaces": [ ]
+      }
+
+    ListNamespacesNonEmptyExample:
+      summary: A non-empty list of namespaces
+      value: {
+        "namespaces": [
+          "accounting",
+          "credits"
+        ]
+      }
