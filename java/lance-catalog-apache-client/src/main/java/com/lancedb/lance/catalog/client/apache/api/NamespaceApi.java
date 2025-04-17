@@ -20,6 +20,7 @@ import com.lancedb.lance.catalog.client.apache.Configuration;
 import com.lancedb.lance.catalog.client.apache.Pair;
 import com.lancedb.lance.catalog.client.apache.model.CreateNamespaceRequest;
 import com.lancedb.lance.catalog.client.apache.model.CreateNamespaceResponse;
+import com.lancedb.lance.catalog.client.apache.model.GetNamespaceResponse;
 import com.lancedb.lance.catalog.client.apache.model.ListNamespacesResponse;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -116,6 +117,77 @@ public class NamespaceApi extends BaseApi {
     return apiClient.invokeAPI(
         localVarPath,
         "POST",
+        localVarQueryParams,
+        localVarCollectionQueryParams,
+        localVarQueryStringJoiner.toString(),
+        localVarPostBody,
+        localVarHeaderParams,
+        localVarCookieParams,
+        localVarFormParams,
+        localVarAccept,
+        localVarContentType,
+        localVarAuthNames,
+        localVarReturnType);
+  }
+
+  /**
+   * Get information about a namespace Return a detailed information for a given namespace
+   *
+   * @param ns The name of the namespace. (required)
+   * @return GetNamespaceResponse
+   * @throws ApiException if fails to make API call
+   */
+  public GetNamespaceResponse getNamespace(String ns) throws ApiException {
+    return this.getNamespace(ns, Collections.emptyMap());
+  }
+
+  /**
+   * Get information about a namespace Return a detailed information for a given namespace
+   *
+   * @param ns The name of the namespace. (required)
+   * @param additionalHeaders additionalHeaders for this call
+   * @return GetNamespaceResponse
+   * @throws ApiException if fails to make API call
+   */
+  public GetNamespaceResponse getNamespace(String ns, Map<String, String> additionalHeaders)
+      throws ApiException {
+    Object localVarPostBody = null;
+
+    // verify the required parameter 'ns' is set
+    if (ns == null) {
+      throw new ApiException(400, "Missing the required parameter 'ns' when calling getNamespace");
+    }
+
+    // create path and map variables
+    String localVarPath =
+        "/v1/namespaces/{ns}"
+            .replaceAll(
+                "\\{" + "ns" + "\\}", apiClient.escapeString(apiClient.parameterToString(ns)));
+
+    StringJoiner localVarQueryStringJoiner = new StringJoiner("&");
+    String localVarQueryParameterBaseName;
+    List<Pair> localVarQueryParams = new ArrayList<Pair>();
+    List<Pair> localVarCollectionQueryParams = new ArrayList<Pair>();
+    Map<String, String> localVarHeaderParams = new HashMap<String, String>();
+    Map<String, String> localVarCookieParams = new HashMap<String, String>();
+    Map<String, Object> localVarFormParams = new HashMap<String, Object>();
+
+    localVarHeaderParams.putAll(additionalHeaders);
+
+    final String[] localVarAccepts = {"application/json"};
+    final String localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+
+    final String[] localVarContentTypes = {};
+
+    final String localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+    String[] localVarAuthNames = new String[] {};
+
+    TypeReference<GetNamespaceResponse> localVarReturnType =
+        new TypeReference<GetNamespaceResponse>() {};
+    return apiClient.invokeAPI(
+        localVarPath,
+        "GET",
         localVarQueryParams,
         localVarCollectionQueryParams,
         localVarQueryStringJoiner.toString(),

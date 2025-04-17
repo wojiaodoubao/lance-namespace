@@ -27,6 +27,18 @@ pub enum CreateNamespaceError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_namespace`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetNamespaceError {
+    Status400(models::ErrorModel),
+    Status403(models::ErrorModel),
+    Status404(models::ErrorModel),
+    Status503(models::ErrorModel),
+    Status5XX(models::ErrorModel),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`list_namespaces`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -73,6 +85,43 @@ pub async fn create_namespace(configuration: &configuration::Configuration, crea
     } else {
         let content = resp.text().await?;
         let entity: Option<CreateNamespaceError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// Return a detailed information for a given namespace
+pub async fn get_namespace(configuration: &configuration::Configuration, ns: &str) -> Result<models::GetNamespaceResponse, Error<GetNamespaceError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_ns = ns;
+
+    let uri_str = format!("{}/v1/namespaces/{ns}", configuration.base_path, ns=crate::apis::urlencode(p_ns));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::GetNamespaceResponse`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::GetNamespaceResponse`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetNamespaceError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
