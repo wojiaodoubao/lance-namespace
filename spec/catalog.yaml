@@ -207,6 +207,33 @@ paths:
         5XX:
           $ref: '#/components/responses/ServerErrorResponse'
 
+  /v1/namespaces/{ns}/tables/{table}:
+    parameters:
+      - $ref: '#/components/parameters/namespace'
+      - $ref: '#/components/parameters/table'
+
+    get:
+      tags: [ Table ]
+      summary: Get a table from the catalog
+      operationId: GetTable
+      description:
+        Get a table's detailed information under a specified namespace from the catalog.
+      responses:
+        200:
+          $ref: '#/components/responses/GetTableResponse'
+        400:
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        401:
+          $ref: '#/components/responses/UnauthorizedResponse'
+        403:
+          $ref: '#/components/responses/ForbiddenResponse'
+        404:
+          $ref: '#/components/responses/NotFoundResponse'
+        503:
+          $ref: '#/components/responses/ServiceUnavailableResponse'
+        5XX:
+          $ref: '#/components/responses/ServerErrorResponse'
+
 components:
   parameters:
     namespace:
@@ -235,6 +262,15 @@ components:
       schema:
         type: integer
         minimum: 1
+
+    table:
+      name: table
+      in: path
+      description:
+        A table name.
+      required: true
+      schema:
+        type: string
 
   schemas:
     ErrorModel:
