@@ -10,23 +10,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-VERSION = 0.0.1
+clean-rust:
+	cd rust; make clean
 
-clean-rust-reqwest-client:
-	rm -rf lance-catalog-reqwest-client/**
+gen-rust:
+	cd rust; make gen
 
-gen-rust-reqwest-client: clean-rust-reqwest-client
-	openapi-generator-cli generate \
-	  -i ../spec/catalog.yaml \
-	  -g rust \
-	  -o lance-catalog-reqwest-client \
-	  --additional-properties=packageName=lance-catalog-reqwest-client,packageVersion=$(VERSION),asyncApi=true,library=reqwest
+build-rust:
+	cd rust; make build
 
-build-rust-reqwest-client: gen-rust-reqwest-client
-	cargo test
+clean-python:
+	cd python; make clean
 
-clean: clean-rust-reqwest-client
+gen-python:
+	cd python; make gen
 
-gen: gen-rust-reqwest-client
+build-python:
+	cd python; make build
 
-build: build-rust-reqwest-client
+clean-java:
+	cd java; make clean
+
+gen-java:
+	cd java; make gen
+
+build-java:
+	cd java; make build
+
+clean: clean-rust clean-python clean-java
+
+gen: gen-rust gen-python gen-java
+
+build: build-rust build-python build-java
