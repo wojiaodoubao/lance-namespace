@@ -71,7 +71,8 @@ public interface NamespaceApi {
    *     lacks valid authentication credentials for the operation. (status code 401) or Forbidden.
    *     Authenticated user does not have the necessary permissions. (status code 403) or Not
    *     Acceptable / Unsupported Operation. The server does not support this operation. (status
-   *     code 406) or The service is not ready to handle the request. The client should wait and
+   *     code 406) or The request conflicts with the current state of the target resource. (status
+   *     code 409) or The service is not ready to handle the request. The client should wait and
    *     retry. The service may additionally send a Retry-After header to indicate when to retry.
    *     (status code 503) or A server-side problem that might not be addressable from the client
    *     side. Used for server 5xx errors without more specific documentation in individual routes.
@@ -122,6 +123,14 @@ public interface NamespaceApi {
             responseCode = "406",
             description =
                 "Not Acceptable / Unsupported Operation. The server does not support this operation.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = ErrorModel.class))
+            }),
+        @ApiResponse(
+            responseCode = "409",
+            description = "The request conflicts with the current state of the target resource.",
             content = {
               @Content(
                   mediaType = "application/json",
@@ -202,6 +211,12 @@ public interface NamespaceApi {
                   ApiUtil.setExampleResponse(request, "application/json", exampleString);
                   break;
                 }
+                if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
+                  String exampleString =
+                      "{ \"instance\" : \"/login/log/abc123\", \"detail\" : \"Authentication failed due to incorrect username or password\", \"type\" : \"/errors/incorrect-user-pass\", \"title\" : \"Incorrect username or password\", \"status\" : 404 }";
+                  ApiUtil.setExampleResponse(request, "application/json", exampleString);
+                  break;
+                }
               }
             });
     return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
@@ -218,7 +233,8 @@ public interface NamespaceApi {
    *     400) or Unauthorized. The request lacks valid authentication credentials for the operation.
    *     (status code 401) or Forbidden. Authenticated user does not have the necessary permissions.
    *     (status code 403) or A server-side problem that means can not find the specified resource.
-   *     (status code 404) or The service is not ready to handle the request. The client should wait
+   *     (status code 404) or The request conflicts with the current state of the target resource.
+   *     (status code 409) or The service is not ready to handle the request. The client should wait
    *     and retry. The service may additionally send a Retry-After header to indicate when to
    *     retry. (status code 503) or A server-side problem that might not be addressable from the
    *     client side. Used for server 5xx errors without more specific documentation in individual
@@ -265,6 +281,14 @@ public interface NamespaceApi {
                   schema = @Schema(implementation = ErrorModel.class))
             }),
         @ApiResponse(
+            responseCode = "409",
+            description = "The request conflicts with the current state of the target resource.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = ErrorModel.class))
+            }),
+        @ApiResponse(
             responseCode = "503",
             description =
                 "The service is not ready to handle the request. The client should wait and retry. The service may additionally send a Retry-After header to indicate when to retry.",
@@ -299,6 +323,12 @@ public interface NamespaceApi {
         .ifPresent(
             request -> {
               for (MediaType mediaType : MediaType.parseMediaTypes(request.getHeader("Accept"))) {
+                if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
+                  String exampleString =
+                      "{ \"instance\" : \"/login/log/abc123\", \"detail\" : \"Authentication failed due to incorrect username or password\", \"type\" : \"/errors/incorrect-user-pass\", \"title\" : \"Incorrect username or password\", \"status\" : 404 }";
+                  ApiUtil.setExampleResponse(request, "application/json", exampleString);
+                  break;
+                }
                 if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
                   String exampleString =
                       "{ \"instance\" : \"/login/log/abc123\", \"detail\" : \"Authentication failed due to incorrect username or password\", \"type\" : \"/errors/incorrect-user-pass\", \"title\" : \"Incorrect username or password\", \"status\" : 404 }";
