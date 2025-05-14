@@ -4,8 +4,8 @@ All URIs are relative to *http://localhost:2333*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**get_table**](TableApi.md#get_table) | **GET** /v1/namespaces/{ns}/tables/{table} | Get a table from the catalog
-[**register_table**](TableApi.md#register_table) | **POST** /v1/namespaces/{ns}/register | Register a new table in the given namespace. A table represents a lance dataset.  In Lance catalog, a table must be hosted in a namespace. 
+[**get_table**](TableApi.md#get_table) | **GET** /v1/namespaces/{ns}/tables/{table} | Get a table from the namespace
+[**register_table**](TableApi.md#register_table) | **POST** /v1/namespaces/{ns}/register | Register a new table in the given namespace. A table represents a lance dataset.  In Lance namespace, a table must be hosted in a namespace. 
 [**table_exists**](TableApi.md#table_exists) | **HEAD** /v1/namespaces/{ns}/tables/{table} | Check if a table exists
 
 
@@ -13,9 +13,9 @@ Method | HTTP request | Description
 ## get_table
 
 > models::GetTableResponse get_table(ns, table)
-Get a table from the catalog
+Get a table from the namespace
 
-Get a table's detailed information under a specified namespace from the catalog.
+Get a table's detailed information under a specified namespace..
 
 ### Parameters
 
@@ -44,7 +44,7 @@ No authorization required
 ## register_table
 
 > models::GetTableResponse register_table(ns, register_table_request)
-Register a new table in the given namespace. A table represents a lance dataset.  In Lance catalog, a table must be hosted in a namespace. 
+Register a new table in the given namespace. A table represents a lance dataset.  In Lance namespace, a table must be hosted in a namespace. 
 
 ### Parameters
 
