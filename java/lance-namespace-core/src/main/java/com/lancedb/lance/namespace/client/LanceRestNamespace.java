@@ -18,7 +18,9 @@ import com.lancedb.lance.namespace.client.apache.ApiException;
 import com.lancedb.lance.namespace.client.apache.api.NamespaceApi;
 import com.lancedb.lance.namespace.client.apache.api.TableApi;
 import com.lancedb.lance.namespace.model.CreateNamespaceRequest;
+import com.lancedb.lance.namespace.model.CreateNamespaceResponse;
 import com.lancedb.lance.namespace.model.DropNamespaceRequest;
+import com.lancedb.lance.namespace.model.DropNamespaceResponse;
 import com.lancedb.lance.namespace.model.GetNamespaceRequest;
 import com.lancedb.lance.namespace.model.GetNamespaceResponse;
 import com.lancedb.lance.namespace.model.GetTableRequest;
@@ -43,7 +45,7 @@ public class LanceRestNamespace implements LanceNamespace {
   }
 
   @Override
-  public GetNamespaceResponse createNamespace(CreateNamespaceRequest request) {
+  public CreateNamespaceResponse createNamespace(CreateNamespaceRequest request) {
     try {
       return namespaceApi.createNamespace(request);
     } catch (ApiException e) {
@@ -71,9 +73,9 @@ public class LanceRestNamespace implements LanceNamespace {
   }
 
   @Override
-  public void dropNamespace(DropNamespaceRequest request) {
+  public DropNamespaceResponse dropNamespace(DropNamespaceRequest request) {
     try {
-      namespaceApi.dropNamespace(request);
+      return namespaceApi.dropNamespace(request);
     } catch (ApiException e) {
       throw new LanceNamespaceException(e);
     }
