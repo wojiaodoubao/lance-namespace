@@ -13,7 +13,7 @@
 VERSION = 0.0.1
 
 clean-python-urllib3-client:
-	rm -rf lance-namespace-urllib3-client/**
+	rm -rf lance_namespace_urllib3_client/**
 
 gen-python-urllib3-client: clean-python-urllib3-client
 	openapi-generator-cli generate \
@@ -32,6 +32,8 @@ gen-python-urllib3-client: clean-python-urllib3-client
 	rm -rf lance_namespace_urllib3_client/setup.py
 	rm -rf lance_namespace_urllib3_client/test-requirements.txt
 	rm -rf lance_namespace_urllib3_client/tox.ini
+	rm -rf lance_namespace_urllib3_client/.openapi-generator-ignore
+	rm -rf lance_namespace_urllib3_client/.openapi-generator
 
 build-python-urllib3-client: gen-python-urllib3-client
 	cd lance_namespace_urllib3_client; \
