@@ -10,6 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+lint:
+	openapi-spec-validator --errors all spec/rest.yaml
+
 clean-rust:
 	cd rust; make clean
 
@@ -39,6 +42,6 @@ build-java:
 
 clean: clean-rust clean-python clean-java
 
-gen: gen-rust gen-python gen-java
+gen: lint gen-rust gen-python gen-java
 
 build: build-rust build-python build-java
