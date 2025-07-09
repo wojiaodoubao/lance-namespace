@@ -870,8 +870,6 @@ components:
             will receive.
           type: integer
           nullable: true
-      required:
-      - parent
     ListNamespacesResponse:
       example:
         nextPageToken: nextPageToken
@@ -1102,8 +1100,6 @@ components:
             will receive.
           type: integer
           nullable: true
-      required:
-      - parent
     ListTablesResponse:
       example:
         tables:

@@ -586,8 +586,6 @@ components:
 
     ListNamespacesRequest:
       type: object
-      required:
-        - parent
       properties:
         parent:
           type: array
@@ -775,8 +773,6 @@ components:
 
     ListTablesRequest:
       type: object
-      required:
-        - parent
       properties:
         parent:
           type: array

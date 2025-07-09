@@ -43,9 +43,6 @@ class TestListTablesRequest(unittest.TestCase):
             )
         else:
             return ListTablesRequest(
-                parent = [
-                    ''
-                    ],
         )
         """
 

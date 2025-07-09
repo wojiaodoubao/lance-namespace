@@ -37,15 +37,6 @@ public class ListNamespacesRequest {
 
   private Integer pageSize;
 
-  public ListNamespacesRequest() {
-    super();
-  }
-
-  /** Constructor with only required parameters */
-  public ListNamespacesRequest(List<String> parent) {
-    this.parent = parent;
-  }
-
   public ListNamespacesRequest parent(List<String> parent) {
     this.parent = parent;
     return this;
@@ -64,8 +55,7 @@ public class ListNamespacesRequest {
    *
    * @return parent
    */
-  @NotNull
-  @Schema(name = "parent", requiredMode = Schema.RequiredMode.REQUIRED)
+  @Schema(name = "parent", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("parent")
   public List<String> getParent() {
     return parent;

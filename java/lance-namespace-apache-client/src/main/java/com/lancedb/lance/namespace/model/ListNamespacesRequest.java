@@ -35,7 +35,7 @@ import java.util.StringJoiner;
     comments = "Generator version: 7.12.0")
 public class ListNamespacesRequest {
   public static final String JSON_PROPERTY_PARENT = "parent";
-  @javax.annotation.Nonnull private List<String> parent = new ArrayList<>();
+  @javax.annotation.Nullable private List<String> parent = new ArrayList<>();
 
   public static final String JSON_PROPERTY_PAGE_TOKEN = "pageToken";
   @javax.annotation.Nullable private String pageToken;
@@ -45,7 +45,7 @@ public class ListNamespacesRequest {
 
   public ListNamespacesRequest() {}
 
-  public ListNamespacesRequest parent(@javax.annotation.Nonnull List<String> parent) {
+  public ListNamespacesRequest parent(@javax.annotation.Nullable List<String> parent) {
 
     this.parent = parent;
     return this;
@@ -64,16 +64,16 @@ public class ListNamespacesRequest {
    *
    * @return parent
    */
-  @javax.annotation.Nonnull
+  @javax.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PARENT)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public List<String> getParent() {
     return parent;
   }
 
   @JsonProperty(JSON_PROPERTY_PARENT)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setParent(@javax.annotation.Nonnull List<String> parent) {
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setParent(@javax.annotation.Nullable List<String> parent) {
     this.parent = parent;
   }
 

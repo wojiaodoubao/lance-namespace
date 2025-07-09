@@ -26,7 +26,7 @@ class ListNamespacesRequest(BaseModel):
     """
     ListNamespacesRequest
     """ # noqa: E501
-    parent: List[StrictStr]
+    parent: Optional[List[StrictStr]] = None
     page_token: Optional[StrictStr] = Field(default=None, description="An opaque token that allows pagination for list APIs (e.g. ListNamespaces). For an initial client request for a list API, if the server cannot return all items in one response, or if there are more items than the `pageSize` specified in the client request, the server must return a `nextPageToken` in the response indicating there are more results available. After the initial request, the value of `nextPageToken` from each response must be used by the client as the `pageToken` parameter value for the next request. Clients must interpret either `null`, missing value or empty string value of `nextPageToken` from a server response as the end of the listing results.", alias="pageToken")
     page_size: Optional[StrictInt] = Field(default=None, description="An inclusive upper bound of the number of results that a client will receive.", alias="pageSize")
     __properties: ClassVar[List[str]] = ["parent", "pageToken", "pageSize"]

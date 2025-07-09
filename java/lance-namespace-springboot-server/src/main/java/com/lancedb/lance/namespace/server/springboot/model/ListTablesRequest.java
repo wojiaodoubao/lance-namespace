@@ -37,15 +37,6 @@ public class ListTablesRequest {
 
   private Integer pageSize;
 
-  public ListTablesRequest() {
-    super();
-  }
-
-  /** Constructor with only required parameters */
-  public ListTablesRequest(List<String> parent) {
-    this.parent = parent;
-  }
-
   public ListTablesRequest parent(List<String> parent) {
     this.parent = parent;
     return this;
@@ -64,8 +55,7 @@ public class ListTablesRequest {
    *
    * @return parent
    */
-  @NotNull
-  @Schema(name = "parent", requiredMode = Schema.RequiredMode.REQUIRED)
+  @Schema(name = "parent", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("parent")
   public List<String> getParent() {
     return parent;
