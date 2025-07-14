@@ -20,8 +20,14 @@ import com.lancedb.lance.namespace.client.apache.api.TableApi;
 import com.lancedb.lance.namespace.client.apache.api.TransactionApi;
 import com.lancedb.lance.namespace.model.AlterTransactionRequest;
 import com.lancedb.lance.namespace.model.AlterTransactionResponse;
+import com.lancedb.lance.namespace.model.CountRowsRequest;
+import com.lancedb.lance.namespace.model.CreateIndexRequest;
+import com.lancedb.lance.namespace.model.CreateIndexResponse;
 import com.lancedb.lance.namespace.model.CreateNamespaceRequest;
 import com.lancedb.lance.namespace.model.CreateNamespaceResponse;
+import com.lancedb.lance.namespace.model.CreateTableResponse;
+import com.lancedb.lance.namespace.model.DeleteFromTableRequest;
+import com.lancedb.lance.namespace.model.DeleteFromTableResponse;
 import com.lancedb.lance.namespace.model.DeregisterTableRequest;
 import com.lancedb.lance.namespace.model.DeregisterTableResponse;
 import com.lancedb.lance.namespace.model.DescribeNamespaceRequest;
@@ -34,14 +40,24 @@ import com.lancedb.lance.namespace.model.DropNamespaceRequest;
 import com.lancedb.lance.namespace.model.DropNamespaceResponse;
 import com.lancedb.lance.namespace.model.DropTableRequest;
 import com.lancedb.lance.namespace.model.DropTableResponse;
+import com.lancedb.lance.namespace.model.IndexListRequest;
+import com.lancedb.lance.namespace.model.IndexListResponse;
+import com.lancedb.lance.namespace.model.IndexStatsRequest;
+import com.lancedb.lance.namespace.model.IndexStatsResponse;
+import com.lancedb.lance.namespace.model.InsertTableResponse;
 import com.lancedb.lance.namespace.model.ListNamespacesRequest;
 import com.lancedb.lance.namespace.model.ListNamespacesResponse;
+import com.lancedb.lance.namespace.model.MergeInsertTableRequest;
+import com.lancedb.lance.namespace.model.MergeInsertTableResponse;
 import com.lancedb.lance.namespace.model.NamespaceExistsRequest;
 import com.lancedb.lance.namespace.model.NamespaceExistsResponse;
+import com.lancedb.lance.namespace.model.QueryRequest;
 import com.lancedb.lance.namespace.model.RegisterTableRequest;
 import com.lancedb.lance.namespace.model.RegisterTableResponse;
 import com.lancedb.lance.namespace.model.TableExistsRequest;
 import com.lancedb.lance.namespace.model.TableExistsResponse;
+import com.lancedb.lance.namespace.model.UpdateTableRequest;
+import com.lancedb.lance.namespace.model.UpdateTableResponse;
 
 import java.util.Map;
 
@@ -132,6 +148,142 @@ public class LanceRestNamespace implements LanceNamespace {
           ObjectIdentifiers.stringFrom(request, config.delimiter()),
           request,
           config.delimiter(),
+          config.additionalHeaders());
+    } catch (ApiException e) {
+      throw new LanceNamespaceException(e);
+    }
+  }
+
+  @Override
+  public Long countRows(CountRowsRequest request) {
+    try {
+      return tableApi.countRows(
+          ObjectIdentifiers.stringFrom(request, config.delimiter()),
+          request,
+          config.delimiter(),
+          config.additionalHeaders());
+    } catch (ApiException e) {
+      throw new LanceNamespaceException(e);
+    }
+  }
+
+  @Override
+  public CreateTableResponse createTable(String tableName, byte[] arrowIpcData) {
+    try {
+      return tableApi.createTable(tableName, arrowIpcData, config.additionalHeaders());
+    } catch (ApiException e) {
+      throw new LanceNamespaceException(e);
+    }
+  }
+
+  @Override
+  public InsertTableResponse insertTable(String tableName, byte[] arrowIpcData, String mode) {
+    try {
+      return tableApi.insertTable(tableName, arrowIpcData, mode, config.additionalHeaders());
+    } catch (ApiException e) {
+      throw new LanceNamespaceException(e);
+    }
+  }
+
+  @Override
+  public MergeInsertTableResponse mergeInsertTable(
+      MergeInsertTableRequest request,
+      byte[] arrowIpcData,
+      String on,
+      Boolean whenMatchedUpdateAll,
+      Boolean whenNotMatchedInsertAll) {
+    try {
+      return tableApi.mergeInsertTable(
+          ObjectIdentifiers.stringFrom(request, config.delimiter()),
+          on,
+          arrowIpcData,
+          whenMatchedUpdateAll,
+          whenNotMatchedInsertAll,
+          config.additionalHeaders());
+    } catch (ApiException e) {
+      throw new LanceNamespaceException(e);
+    }
+  }
+
+  @Override
+  public UpdateTableResponse updateTable(UpdateTableRequest request) {
+    try {
+      return tableApi.updateTable(
+          ObjectIdentifiers.stringFrom(request, config.delimiter()),
+          request,
+          config.additionalHeaders());
+    } catch (ApiException e) {
+      throw new LanceNamespaceException(e);
+    }
+  }
+
+  @Override
+  public DeleteFromTableResponse deleteFromTable(DeleteFromTableRequest request) {
+    try {
+      return tableApi.deleteFromTable(
+          ObjectIdentifiers.stringFrom(request, config.delimiter()),
+          request,
+          config.additionalHeaders());
+    } catch (ApiException e) {
+      throw new LanceNamespaceException(e);
+    }
+  }
+
+  @Override
+  public byte[] queryTable(QueryRequest request) {
+    try {
+      return tableApi.queryTable(
+          ObjectIdentifiers.stringFrom(request, config.delimiter()),
+          request,
+          config.additionalHeaders());
+    } catch (ApiException e) {
+      throw new LanceNamespaceException(e);
+    }
+  }
+
+  @Override
+  public CreateIndexResponse createIndex(CreateIndexRequest request) {
+    try {
+      return tableApi.createIndex(
+          ObjectIdentifiers.stringFrom(request, config.delimiter()),
+          request,
+          config.additionalHeaders());
+    } catch (ApiException e) {
+      throw new LanceNamespaceException(e);
+    }
+  }
+
+  @Override
+  public CreateIndexResponse createScalarIndex(CreateIndexRequest request) {
+    try {
+      return tableApi.createScalarIndex(
+          ObjectIdentifiers.stringFrom(request, config.delimiter()),
+          request,
+          config.additionalHeaders());
+    } catch (ApiException e) {
+      throw new LanceNamespaceException(e);
+    }
+  }
+
+  @Override
+  public IndexListResponse listIndices(IndexListRequest request) {
+    try {
+      return tableApi.listIndices(
+          ObjectIdentifiers.stringFrom(request, config.delimiter()),
+          request,
+          config.additionalHeaders());
+    } catch (ApiException e) {
+      throw new LanceNamespaceException(e);
+    }
+  }
+
+  @Override
+  public IndexStatsResponse getIndexStats(IndexStatsRequest request, String indexName) {
+    try {
+      return tableApi.getIndexStats(
+          ObjectIdentifiers.stringFrom(request, config.delimiter()),
+          indexName,
+          request,
           config.additionalHeaders());
     } catch (ApiException e) {
       throw new LanceNamespaceException(e);

@@ -26,6 +26,41 @@ class TestTableApi(unittest.TestCase):
     def tearDown(self) -> None:
         pass
 
+    def test_count_rows(self) -> None:
+        """Test case for count_rows
+
+        Count rows in a table
+        """
+        pass
+
+    def test_create_index(self) -> None:
+        """Test case for create_index
+
+        Create an index on a table
+        """
+        pass
+
+    def test_create_scalar_index(self) -> None:
+        """Test case for create_scalar_index
+
+        Create a scalar index on a table
+        """
+        pass
+
+    def test_create_table(self) -> None:
+        """Test case for create_table
+
+        Create a table with the given name
+        """
+        pass
+
+    def test_delete_from_table(self) -> None:
+        """Test case for delete_from_table
+
+        Delete rows from a table
+        """
+        pass
+
     def test_deregister_table(self) -> None:
         """Test case for deregister_table
 
@@ -40,6 +75,13 @@ class TestTableApi(unittest.TestCase):
         """
         pass
 
+    def test_describe_table_v2(self) -> None:
+        """Test case for describe_table_v2
+
+        Describe a table from the namespace
+        """
+        pass
+
     def test_drop_table(self) -> None:
         """Test case for drop_table
 
@@ -47,10 +89,45 @@ class TestTableApi(unittest.TestCase):
         """
         pass
 
+    def test_get_index_stats(self) -> None:
+        """Test case for get_index_stats
+
+        Get index statistics
+        """
+        pass
+
+    def test_insert_table(self) -> None:
+        """Test case for insert_table
+
+        Insert records into a table
+        """
+        pass
+
+    def test_list_indices(self) -> None:
+        """Test case for list_indices
+
+        List indices on a table
+        """
+        pass
+
     def test_list_tables(self) -> None:
         """Test case for list_tables
 
         List tables
+        """
+        pass
+
+    def test_merge_insert_table(self) -> None:
+        """Test case for merge_insert_table
+
+        Merge insert (upsert) records into a table
+        """
+        pass
+
+    def test_query_table(self) -> None:
+        """Test case for query_table
+
+        Query a table
         """
         pass
 
@@ -65,6 +142,13 @@ class TestTableApi(unittest.TestCase):
         """Test case for table_exists
 
         Check if a table exists
+        """
+        pass
+
+    def test_update_table(self) -> None:
+        """Test case for update_table
+
+        Update rows in a table
         """
         pass
 

@@ -118,12 +118,24 @@ Class | Method | HTTP request | Description
 *NamespaceApi* | [**dropNamespace**](docs/NamespaceApi.md#dropNamespace) | **POST** /v1/namespace/{id}/drop | Drop a namespace
 *NamespaceApi* | [**listNamespaces**](docs/NamespaceApi.md#listNamespaces) | **POST** /v1/namespace/{id}/list | List namespaces
 *NamespaceApi* | [**namespaceExists**](docs/NamespaceApi.md#namespaceExists) | **POST** /v1/namespace/{id}/exists | Check if a namespace exists
+*TableApi* | [**countRows**](docs/TableApi.md#countRows) | **POST** /v1/table/{id}/count_rows | Count rows in a table
+*TableApi* | [**createIndex**](docs/TableApi.md#createIndex) | **POST** /v1/table/{id}/create_index | Create an index on a table
+*TableApi* | [**createScalarIndex**](docs/TableApi.md#createScalarIndex) | **POST** /v1/table/{id}/create_scalar_index | Create a scalar index on a table
+*TableApi* | [**createTable**](docs/TableApi.md#createTable) | **POST** /v1/table/{id}/create | Create a table with the given name
+*TableApi* | [**deleteFromTable**](docs/TableApi.md#deleteFromTable) | **POST** /v1/table/{id}/delete | Delete rows from a table
 *TableApi* | [**deregisterTable**](docs/TableApi.md#deregisterTable) | **POST** /v1/table/{id}/deregister | Deregister a table from its namespace
 *TableApi* | [**describeTable**](docs/TableApi.md#describeTable) | **POST** /v1/table/{id}/describe | Describe a table from the namespace
+*TableApi* | [**describeTableV2**](docs/TableApi.md#describeTableV2) | **POST** /v2/table/{id}/describe | Describe a table from the namespace
 *TableApi* | [**dropTable**](docs/TableApi.md#dropTable) | **POST** /v1/table/{id}/drop | Drop a table from its namespace
+*TableApi* | [**getIndexStats**](docs/TableApi.md#getIndexStats) | **POST** /v1/table/{id}/index/{index_name}/stats | Get index statistics
+*TableApi* | [**insertTable**](docs/TableApi.md#insertTable) | **POST** /v1/table/{id}/insert | Insert records into a table
+*TableApi* | [**listIndices**](docs/TableApi.md#listIndices) | **POST** /v1/table/{id}/index/list | List indices on a table
 *TableApi* | [**listTables**](docs/TableApi.md#listTables) | **POST** /v1/table/{id}/list | List tables
+*TableApi* | [**mergeInsertTable**](docs/TableApi.md#mergeInsertTable) | **POST** /v1/table/{id}/merge_insert | Merge insert (upsert) records into a table
+*TableApi* | [**queryTable**](docs/TableApi.md#queryTable) | **POST** /v1/table/{id}/query | Query a table
 *TableApi* | [**registerTable**](docs/TableApi.md#registerTable) | **POST** /v1/table/{id}/register | Register a table to a namespace
 *TableApi* | [**tableExists**](docs/TableApi.md#tableExists) | **POST** /v1/table/{id}/exists | Check if a table exists
+*TableApi* | [**updateTable**](docs/TableApi.md#updateTable) | **POST** /v1/table/{id}/update | Update rows in a table
 *TransactionApi* | [**alterTransaction**](docs/TransactionApi.md#alterTransaction) | **POST** /v1/transaction/{id}/alter | Alter information of a transaction.
 *TransactionApi* | [**describeTransaction**](docs/TransactionApi.md#describeTransaction) | **POST** /v1/transaction/{id}/describe | Describe information about a transaction
 
@@ -136,14 +148,22 @@ Class | Method | HTTP request | Description
  - [AlterTransactionSetProperty](docs/AlterTransactionSetProperty.md)
  - [AlterTransactionSetStatus](docs/AlterTransactionSetStatus.md)
  - [AlterTransactionUnsetProperty](docs/AlterTransactionUnsetProperty.md)
+ - [CountRowsRequest](docs/CountRowsRequest.md)
+ - [CreateIndexRequest](docs/CreateIndexRequest.md)
+ - [CreateIndexResponse](docs/CreateIndexResponse.md)
  - [CreateNamespaceRequest](docs/CreateNamespaceRequest.md)
  - [CreateNamespaceResponse](docs/CreateNamespaceResponse.md)
+ - [CreateTableResponse](docs/CreateTableResponse.md)
+ - [DeleteFromTableRequest](docs/DeleteFromTableRequest.md)
+ - [DeleteFromTableResponse](docs/DeleteFromTableResponse.md)
  - [DeregisterTableRequest](docs/DeregisterTableRequest.md)
  - [DeregisterTableResponse](docs/DeregisterTableResponse.md)
  - [DescribeNamespaceRequest](docs/DescribeNamespaceRequest.md)
  - [DescribeNamespaceResponse](docs/DescribeNamespaceResponse.md)
  - [DescribeTableRequest](docs/DescribeTableRequest.md)
+ - [DescribeTableRequestV2](docs/DescribeTableRequestV2.md)
  - [DescribeTableResponse](docs/DescribeTableResponse.md)
+ - [DescribeTableResponseV2](docs/DescribeTableResponseV2.md)
  - [DescribeTransactionRequest](docs/DescribeTransactionRequest.md)
  - [DescribeTransactionResponse](docs/DescribeTransactionResponse.md)
  - [DropNamespaceRequest](docs/DropNamespaceRequest.md)
@@ -151,19 +171,34 @@ Class | Method | HTTP request | Description
  - [DropTableRequest](docs/DropTableRequest.md)
  - [DropTableResponse](docs/DropTableResponse.md)
  - [ErrorResponse](docs/ErrorResponse.md)
+ - [IndexListItemResponse](docs/IndexListItemResponse.md)
+ - [IndexListRequest](docs/IndexListRequest.md)
+ - [IndexListResponse](docs/IndexListResponse.md)
+ - [IndexStatsRequest](docs/IndexStatsRequest.md)
+ - [IndexStatsResponse](docs/IndexStatsResponse.md)
+ - [InsertTableResponse](docs/InsertTableResponse.md)
+ - [JsonDataType](docs/JsonDataType.md)
+ - [JsonField](docs/JsonField.md)
+ - [JsonSchema](docs/JsonSchema.md)
  - [ListNamespacesRequest](docs/ListNamespacesRequest.md)
  - [ListNamespacesResponse](docs/ListNamespacesResponse.md)
  - [ListTablesRequest](docs/ListTablesRequest.md)
  - [ListTablesResponse](docs/ListTablesResponse.md)
+ - [MergeInsertTableRequest](docs/MergeInsertTableRequest.md)
+ - [MergeInsertTableResponse](docs/MergeInsertTableResponse.md)
  - [NamespaceExistsRequest](docs/NamespaceExistsRequest.md)
  - [NamespaceExistsResponse](docs/NamespaceExistsResponse.md)
+ - [QueryRequest](docs/QueryRequest.md)
  - [RegisterTableRequest](docs/RegisterTableRequest.md)
  - [RegisterTableResponse](docs/RegisterTableResponse.md)
  - [SetPropertyMode](docs/SetPropertyMode.md)
+ - [TableBasicStats](docs/TableBasicStats.md)
  - [TableExistsRequest](docs/TableExistsRequest.md)
  - [TableExistsResponse](docs/TableExistsResponse.md)
  - [TransactionStatus](docs/TransactionStatus.md)
  - [UnsetPropertyMode](docs/UnsetPropertyMode.md)
+ - [UpdateTableRequest](docs/UpdateTableRequest.md)
+ - [UpdateTableResponse](docs/UpdateTableResponse.md)
 
 
 <a id="documentation-for-authorization"></a>

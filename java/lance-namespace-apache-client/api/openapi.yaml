@@ -233,6 +233,463 @@ paths:
       x-content-type: application/json
       x-accepts:
       - application/json
+  /v1/table/{id}/insert:
+    parameters:
+    - $ref: '#/components/parameters/id'
+    - description: "Insert mode: \"append\" (default) or \"overwrite\""
+      explode: true
+      in: query
+      name: mode
+      required: false
+      schema:
+        default: append
+        enum:
+        - append
+        - overwrite
+        type: string
+      style: form
+    post:
+      description: |
+        Insert new records into an existing table using Arrow IPC format. Supports both lance-namespace format (with namespace in body) and LanceDB format (with database in headers).
+      operationId: InsertTable
+      parameters:
+      - $ref: '#/components/parameters/id'
+      - description: "Insert mode: \"append\" (default) or \"overwrite\""
+        explode: true
+        in: query
+        name: mode
+        required: false
+        schema:
+          default: append
+          enum:
+          - append
+          - overwrite
+          type: string
+        style: form
+      requestBody:
+        content:
+          application/x-arrow-ipc:
+            schema:
+              format: binary
+              type: string
+        description: Arrow IPC data
+        required: true
+      responses:
+        "200":
+          $ref: '#/components/responses/InsertTableResponse'
+        "400":
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        "401":
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        "403":
+          $ref: '#/components/responses/ForbiddenErrorResponse'
+        "404":
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailableErrorResponse'
+        "5XX":
+          $ref: '#/components/responses/ServerErrorResponse'
+      summary: Insert records into a table
+      tags:
+      - Table
+      x-content-type: application/x-arrow-ipc
+      x-accepts:
+      - application/json
+  /v1/table/{id}/merge_insert:
+    parameters:
+    - $ref: '#/components/parameters/id'
+    - description: Column name to use for matching rows (required)
+      explode: true
+      in: query
+      name: "on"
+      required: true
+      schema:
+        type: string
+      style: form
+    - description: Update all columns when rows match
+      explode: true
+      in: query
+      name: when_matched_update_all
+      required: false
+      schema:
+        default: false
+        type: boolean
+      style: form
+    - description: Insert all columns when rows don't match
+      explode: true
+      in: query
+      name: when_not_matched_insert_all
+      required: false
+      schema:
+        default: false
+        type: boolean
+      style: form
+    post:
+      description: |
+        Performs a merge insert (upsert) operation on a table. This operation updates existing rows based on a matching column and inserts new rows that don't match. Returns the number of rows inserted and updated.
+      operationId: MergeInsertTable
+      parameters:
+      - $ref: '#/components/parameters/id'
+      - description: Column name to use for matching rows (required)
+        explode: true
+        in: query
+        name: "on"
+        required: true
+        schema:
+          type: string
+        style: form
+      - description: Update all columns when rows match
+        explode: true
+        in: query
+        name: when_matched_update_all
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - description: Insert all columns when rows don't match
+        explode: true
+        in: query
+        name: when_not_matched_insert_all
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      requestBody:
+        content:
+          application/x-arrow-ipc:
+            schema:
+              format: binary
+              type: string
+        description: Arrow IPC data containing the records to merge
+        required: true
+      responses:
+        "200":
+          $ref: '#/components/responses/MergeInsertTableResponse'
+        "400":
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        "401":
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        "403":
+          $ref: '#/components/responses/ForbiddenErrorResponse'
+        "404":
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailableErrorResponse'
+        "5XX":
+          $ref: '#/components/responses/ServerErrorResponse'
+      summary: Merge insert (upsert) records into a table
+      tags:
+      - Table
+      x-content-type: application/x-arrow-ipc
+      x-accepts:
+      - application/json
+  /v1/table/{id}/update:
+    parameters:
+    - $ref: '#/components/parameters/id'
+    post:
+      description: |
+        Update existing rows in a table using SQL expressions. Each update consists of a column name and an SQL expression that will be evaluated against the current row's value. Optionally, a predicate can be provided to filter which rows to update.
+      operationId: UpdateTable
+      parameters:
+      - $ref: '#/components/parameters/id'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTableRequest'
+        description: Update request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateTableResponse'
+          description: Update successful
+        "400":
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        "401":
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        "403":
+          $ref: '#/components/responses/ForbiddenErrorResponse'
+        "404":
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailableErrorResponse'
+        "5XX":
+          $ref: '#/components/responses/ServerErrorResponse'
+      summary: Update rows in a table
+      tags:
+      - Table
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /v1/table/{id}/delete:
+    parameters:
+    - $ref: '#/components/parameters/id'
+    post:
+      description: |
+        Delete rows from a table based on a SQL predicate. Returns the number of rows that were deleted.
+      operationId: DeleteFromTable
+      parameters:
+      - $ref: '#/components/parameters/id'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteFromTableRequest'
+        description: Delete request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteFromTableResponse'
+          description: Delete successful
+        "400":
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        "401":
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        "403":
+          $ref: '#/components/responses/ForbiddenErrorResponse'
+        "404":
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailableErrorResponse'
+        "5XX":
+          $ref: '#/components/responses/ServerErrorResponse'
+      summary: Delete rows from a table
+      tags:
+      - Table
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /v1/table/{id}/query:
+    parameters:
+    - $ref: '#/components/parameters/id'
+    post:
+      description: |
+        Query a table with vector search and optional filtering. Returns results in Arrow IPC stream format.
+      operationId: QueryTable
+      parameters:
+      - $ref: '#/components/parameters/id'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryRequest'
+        description: Query request
+        required: true
+      responses:
+        "200":
+          content:
+            application/vnd.apache.arrow.stream:
+              schema:
+                format: binary
+                type: string
+          description: Query results in Arrow IPC stream format
+        "400":
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        "401":
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        "403":
+          $ref: '#/components/responses/ForbiddenErrorResponse'
+        "404":
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailableErrorResponse'
+        "5XX":
+          $ref: '#/components/responses/ServerErrorResponse'
+      summary: Query a table
+      tags:
+      - Table
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+      - application/vnd.apache.arrow.stream
+  /v1/table/{id}/create_index:
+    parameters:
+    - $ref: '#/components/parameters/id'
+    post:
+      description: |
+        Create an index on a table column for faster search operations. Supports vector indexes (IVF_FLAT, IVF_HNSW_SQ, IVF_PQ) and scalar indexes.
+      operationId: CreateIndex
+      parameters:
+      - $ref: '#/components/parameters/id'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIndexRequest'
+        description: Index creation request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateIndexResponse'
+          description: Index created successfully
+        "400":
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        "401":
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        "403":
+          $ref: '#/components/responses/ForbiddenErrorResponse'
+        "404":
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailableErrorResponse'
+        "5XX":
+          $ref: '#/components/responses/ServerErrorResponse'
+      summary: Create an index on a table
+      tags:
+      - Table
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /v1/table/{id}/create_scalar_index:
+    parameters:
+    - $ref: '#/components/parameters/id'
+    post:
+      description: |
+        Create a scalar index on a table column for faster search operations. Supports scalar indexes (BTREE, BITMAP, LABEL_LIST).
+      operationId: CreateScalarIndex
+      parameters:
+      - $ref: '#/components/parameters/id'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIndexRequest'
+        description: Scalar index creation request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateIndexResponse'
+          description: Scalar index created successfully
+        "400":
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        "401":
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        "403":
+          $ref: '#/components/responses/ForbiddenErrorResponse'
+        "404":
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailableErrorResponse'
+        "5XX":
+          $ref: '#/components/responses/ServerErrorResponse'
+      summary: Create a scalar index on a table
+      tags:
+      - Table
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /v1/table/{id}/index/list:
+    parameters:
+    - $ref: '#/components/parameters/id'
+    post:
+      description: |
+        List all indices created on a table. Returns information about each index including name, columns, status, and UUID.
+      operationId: ListIndices
+      parameters:
+      - $ref: '#/components/parameters/id'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndexListRequest'
+        description: Index list request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexListResponse'
+          description: List of indices on the table
+        "400":
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        "401":
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        "403":
+          $ref: '#/components/responses/ForbiddenErrorResponse'
+        "404":
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailableErrorResponse'
+        "5XX":
+          $ref: '#/components/responses/ServerErrorResponse'
+      summary: List indices on a table
+      tags:
+      - Table
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /v1/table/{id}/index/{index_name}/stats:
+    parameters:
+    - $ref: '#/components/parameters/id'
+    - description: Name of the index to get stats for
+      explode: false
+      in: path
+      name: index_name
+      required: true
+      schema:
+        type: string
+      style: simple
+    post:
+      description: |
+        Get statistics for a specific index on a table. Returns information about the index type, distance type (for vector indices), and row counts.
+      operationId: GetIndexStats
+      parameters:
+      - $ref: '#/components/parameters/id'
+      - description: Name of the index to get stats for
+        explode: false
+        in: path
+        name: index_name
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndexStatsRequest'
+        description: Index stats request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexStatsResponse'
+          description: Index statistics
+        "400":
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        "401":
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        "403":
+          $ref: '#/components/responses/ForbiddenErrorResponse'
+        "404":
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailableErrorResponse'
+        "5XX":
+          $ref: '#/components/responses/ServerErrorResponse'
+      summary: Get index statistics
+      tags:
+      - Table
+      x-content-type: application/json
+      x-accepts:
+      - application/json
   /v1/table/{id}/register:
     parameters:
     - $ref: '#/components/parameters/id'
@@ -317,7 +774,7 @@ paths:
     - $ref: '#/components/parameters/delimiter'
     post:
       description: |
-        Get a table's detailed information under a specified namespace.
+        Get a table's detailed information under a specified namespace. Supports both lance-namespace format (with namespace in body) and LanceDB format (with database in headers).
       operationId: DescribeTable
       parameters:
       - $ref: '#/components/parameters/id'
@@ -344,6 +801,82 @@ paths:
         "5XX":
           $ref: '#/components/responses/ServerErrorResponse'
       summary: Describe a table from the namespace
+      tags:
+      - Table
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /v2/table/{id}/describe:
+    parameters:
+    - $ref: '#/components/parameters/id'
+    - $ref: '#/components/parameters/delimiter'
+    post:
+      description: |
+        Get a table's detailed information under a specified namespace.
+      operationId: DescribeTableV2
+      parameters:
+      - $ref: '#/components/parameters/id'
+      - $ref: '#/components/parameters/delimiter'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DescribeTableRequestV2'
+        required: true
+      responses:
+        "200":
+          $ref: '#/components/responses/DescribeTableResponseV2'
+        "400":
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        "401":
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        "403":
+          $ref: '#/components/responses/ForbiddenErrorResponse'
+        "404":
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailableErrorResponse'
+        "5XX":
+          $ref: '#/components/responses/ServerErrorResponse'
+      summary: Describe a table from the namespace
+      tags:
+      - Table
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /v1/table/{id}/count_rows:
+    parameters:
+    - $ref: '#/components/parameters/id'
+    - $ref: '#/components/parameters/delimiter'
+    post:
+      description: |
+        Count the number of rows in a table. Supports both lance-namespace format (with namespace in body) and LanceDB format (with database in headers).
+      operationId: CountRows
+      parameters:
+      - $ref: '#/components/parameters/id'
+      - $ref: '#/components/parameters/delimiter'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CountRowsRequest'
+        required: true
+      responses:
+        "200":
+          $ref: '#/components/responses/CountRowsResponse'
+        "400":
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        "401":
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        "403":
+          $ref: '#/components/responses/ForbiddenErrorResponse'
+        "404":
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailableErrorResponse'
+        "5XX":
+          $ref: '#/components/responses/ServerErrorResponse'
+      summary: Count rows in a table
       tags:
       - Table
       x-content-type: application/json
@@ -539,6 +1072,44 @@ paths:
       x-content-type: application/json
       x-accepts:
       - application/json
+  /v1/table/{id}/create:
+    parameters:
+    - $ref: '#/components/parameters/id'
+    post:
+      description: |
+        Create a new table in the namespace. Supports both lance-namespace format (with namespace in body) and LanceDB format (with database in headers).
+      operationId: CreateTable
+      parameters:
+      - $ref: '#/components/parameters/id'
+      requestBody:
+        content:
+          application/x-arrow-ipc:
+            schema:
+              format: binary
+              type: string
+        description: Arrow IPC data
+        required: true
+      responses:
+        "200":
+          $ref: '#/components/responses/CreateTableResponse'
+        "400":
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        "401":
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        "403":
+          $ref: '#/components/responses/ForbiddenErrorResponse'
+        "404":
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailableErrorResponse'
+        "5XX":
+          $ref: '#/components/responses/ServerErrorResponse'
+      summary: Create a table with the given name
+      tags:
+      - Table
+      x-content-type: application/x-arrow-ipc
+      x-accepts:
+      - application/json
 components:
   examples:
     ListNamespacesEmptyExample:
@@ -621,6 +1192,36 @@ components:
           schema:
             $ref: '#/components/schemas/DescribeTableResponse'
       description: Table properties result when loading a table
+    DescribeTableResponseV2:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DescribeTableResponseV2'
+      description: Table properties result when loading a table
+    CountRowsResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CountRowsResponse'
+      description: Result of counting rows in a table
+    CreateTableResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateTableResponse'
+      description: Table properties result when creating a table
+    InsertTableResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/InsertTableResponse'
+      description: Result of inserting records into a table
+    MergeInsertTableResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MergeInsertTableResponse'
+      description: Result of merge insert operation
     RegisterTableResponse:
       content:
         application/json:
@@ -1129,6 +1730,94 @@ components:
         namespace:
         - namespace
         - namespace
+        version: 0
+      properties:
+        name:
+          type: string
+        namespace:
+          items:
+            type: string
+          type: array
+        version:
+          format: int64
+          minimum: 0
+          nullable: true
+          type: integer
+    DescribeTableResponse:
+      example:
+        schema:
+          metadata:
+            key: metadata
+          fields:
+          - metadata:
+              key: metadata
+            nullable: true
+            name: name
+            type:
+              length: 0
+              fields: "{}"
+              type: type
+          - metadata:
+              key: metadata
+            nullable: true
+            name: name
+            type:
+              length: 0
+              fields: "{}"
+              type: type
+        stats:
+          num_deleted_rows: 0
+          num_fragments: 0
+        table_uri: table_uri
+        name: name
+        namespace:
+        - namespace
+        - namespace
+        location: location
+        version: 0
+        properties:
+          key: properties
+        table: table
+      properties:
+        name:
+          type: string
+        namespace:
+          items:
+            type: string
+          type: array
+        location:
+          type: string
+        properties:
+          additionalProperties:
+            type: string
+        schema:
+          $ref: '#/components/schemas/JsonSchema'
+        stats:
+          $ref: '#/components/schemas/TableBasicStats'
+        table:
+          type: string
+        table_uri:
+          description: "Table URI, optional"
+          nullable: true
+          type: string
+        version:
+          format: int64
+          minimum: 0
+          type: integer
+      required:
+      - location
+      - name
+      - namespace
+      - schema
+      - stats
+      - table
+      - version
+    DescribeTableRequestV2:
+      example:
+        name: name
+        namespace:
+        - namespace
+        - namespace
       properties:
         name:
           type: string
@@ -1139,7 +1828,611 @@ components:
       required:
       - name
       - namespace
-    DescribeTableResponse:
+    DescribeTableResponseV2:
+      example:
+        name: name
+        namespace:
+        - namespace
+        - namespace
+        location: location
+        properties:
+          key: properties
+      properties:
+        name:
+          type: string
+        namespace:
+          items:
+            type: string
+          type: array
+        location:
+          type: string
+        properties:
+          additionalProperties:
+            type: string
+      required:
+      - location
+      - name
+      - namespace
+    CountRowsRequest:
+      example:
+        name: name
+        namespace:
+        - namespace
+        - namespace
+      properties:
+        name:
+          type: string
+        namespace:
+          items:
+            type: string
+          type: array
+    CountRowsResponse:
+      description: Response containing the count of rows. Serializes transparently
+        as just the number for backward compatibility.
+      format: int64
+      minimum: 0
+      type: integer
+    InsertTableResponse:
+      description: Response from inserting records into a table
+      example:
+        version: 0
+      properties:
+        version:
+          description: The version of the table after the insert
+          format: int64
+          minimum: 0
+          type: integer
+    MergeInsertTableRequest:
+      properties:
+        name:
+          description: The table name
+          type: string
+        namespace:
+          description: The namespace identifier
+          items:
+            type: string
+          type: array
+      required:
+      - name
+      - namespace
+    MergeInsertTableResponse:
+      description: Response from merge insert operation
+      example:
+        num_inserted_rows: 0
+        num_updated_rows: 0
+        num_deleted_rows: 0
+        version: 0
+      properties:
+        num_updated_rows:
+          description: Number of rows updated
+          format: int64
+          minimum: 0
+          type: integer
+        num_inserted_rows:
+          description: Number of rows inserted
+          format: int64
+          minimum: 0
+          type: integer
+        num_deleted_rows:
+          description: Number of rows deleted (typically 0 for merge insert)
+          format: int64
+          minimum: 0
+          type: integer
+        version:
+          description: The commit version associated with the operation
+          format: int64
+          minimum: 0
+          type: integer
+    UpdateTableRequest:
+      example:
+        predicate: predicate
+        name: name
+        namespace:
+        - namespace
+        - namespace
+        updates:
+        - - updates
+          - updates
+        - - updates
+          - updates
+      properties:
+        name:
+          description: The table name
+          type: string
+        namespace:
+          description: The namespace identifier
+          items:
+            type: string
+          type: array
+        predicate:
+          description: Optional SQL predicate to filter rows for update
+          type: string
+          nullable: true
+        updates:
+          description: "List of column updates as [column_name, expression] pairs"
+          items:
+            items:
+              type: string
+            maxItems: 2
+            minItems: 2
+            type: array
+          type: array
+      required:
+      - name
+      - namespace
+      - updates
+    UpdateTableResponse:
+      example:
+        updated_rows: 0
+        version: 0
+      properties:
+        updated_rows:
+          description: Number of rows updated
+          format: int64
+          minimum: 0
+          type: integer
+        version:
+          description: The commit version associated with the operation
+          format: int64
+          minimum: 0
+          type: integer
+      required:
+      - updated_rows
+      - version
+    DeleteFromTableRequest:
+      example:
+        predicate: predicate
+        name: name
+        namespace:
+        - namespace
+        - namespace
+      properties:
+        name:
+          description: The table name
+          type: string
+        namespace:
+          description: The namespace identifier
+          items:
+            type: string
+          type: array
+        predicate:
+          description: SQL predicate to filter rows for deletion
+          type: string
+      required:
+      - name
+      - namespace
+      - predicate
+    DeleteFromTableResponse:
+      example:
+        version: 0
+      properties:
+        version:
+          description: The commit version associated with the operation
+          format: int64
+          minimum: 0
+          type: integer
+      required:
+      - version
+    QueryRequest:
+      example:
+        ef: 1
+        offset: 0
+        columns:
+        - columns
+        - columns
+        k: 1
+        version: 0
+        with_row_id: true
+        prefilter: true
+        filter: filter
+        refine_factor: 1
+        distance_type: l2
+        bypass_vector_index: true
+        nprobes: 1
+        name: name
+        namespace:
+        - namespace
+        - namespace
+        vector:
+        - 0.8008282
+        - 0.8008282
+      properties:
+        name:
+          type: string
+        namespace:
+          items:
+            type: string
+          type: array
+        vector:
+          description: Query vector for similarity search
+          items:
+            format: float
+            type: number
+          type: array
+        k:
+          description: Number of results to return
+          minimum: 1
+          type: integer
+        filter:
+          description: Optional SQL filter expression
+          type: string
+        columns:
+          description: Optional list of columns to return
+          items:
+            type: string
+          type: array
+        distance_type:
+          description: Distance metric to use
+          enum:
+          - l2
+          - cosine
+          - dot
+          type: string
+        prefilter:
+          description: Whether to apply filtering before vector search
+          type: boolean
+        bypass_vector_index:
+          description: Whether to bypass vector index
+          type: boolean
+        ef:
+          description: Search effort parameter for HNSW index
+          minimum: 1
+          type: integer
+        nprobes:
+          description: Number of probes for IVF index
+          minimum: 1
+          type: integer
+        refine_factor:
+          description: Refine factor for search
+          minimum: 1
+          type: integer
+        with_row_id:
+          description: Whether to include row ID in results
+          type: boolean
+        offset:
+          description: Number of results to skip
+          minimum: 0
+          type: integer
+        version:
+          description: Table version to query
+          format: int64
+          minimum: 0
+          type: integer
+      required:
+      - k
+      - name
+      - namespace
+      - vector
+    CreateIndexRequest:
+      example:
+        max_iterations: 1
+        num_sub_vectors: 1
+        sample_rate: 1
+        name: name
+        namespace:
+        - namespace
+        - namespace
+        column: column
+        metric_type: l2
+        num_partitions: 1
+        num_bits: 2
+        index_type: BTREE
+      properties:
+        name:
+          description: The table name
+          type: string
+        namespace:
+          description: The namespace identifier
+          items:
+            type: string
+          type: array
+        column:
+          description: Name of the column to create index on
+          type: string
+        index_type:
+          description: Type of index to create
+          enum:
+          - BTREE
+          - BITMAP
+          - LABEL_LIST
+          - IVF_FLAT
+          - IVF_HNSW_SQ
+          - IVF_PQ
+          - FTS
+          type: string
+        metric_type:
+          description: Distance metric type for vector indexes
+          enum:
+          - l2
+          - cosine
+          - dot
+          type: string
+        num_partitions:
+          description: Number of partitions for IVF indexes
+          minimum: 1
+          type: integer
+        num_sub_vectors:
+          description: Number of sub-vectors for PQ indexes
+          minimum: 1
+          type: integer
+        num_bits:
+          description: Number of bits for scalar quantization
+          maximum: 8
+          minimum: 1
+          type: integer
+        max_iterations:
+          description: Maximum iterations for index building
+          minimum: 1
+          type: integer
+        sample_rate:
+          description: Sample rate for index building
+          minimum: 1
+          type: integer
+      required:
+      - column
+      - index_type
+      - name
+      - namespace
+    CreateIndexResponse:
+      example:
+        name: name
+        namespace:
+        - namespace
+        - namespace
+        location: location
+        properties:
+          key: properties
+      properties:
+        name:
+          description: The table name
+          type: string
+        namespace:
+          description: The namespace identifier
+          items:
+            type: string
+          type: array
+        location:
+          description: Table location (usually empty)
+          type: string
+        properties:
+          additionalProperties:
+            type: string
+          description: Additional properties (usually empty)
+      required:
+      - location
+      - name
+      - namespace
+    IndexListRequest:
+      example:
+        name: name
+        namespace:
+        - namespace
+        - namespace
+        version: 0
+      properties:
+        name:
+          description: The table name
+          type: string
+        namespace:
+          description: The namespace identifier
+          items:
+            type: string
+          type: array
+        version:
+          description: Optional table version to list indexes from
+          format: int64
+          minimum: 0
+          type: integer
+          nullable: true
+      required:
+      - name
+      - namespace
+    IndexListResponse:
+      example:
+        indexes:
+        - index_uuid: index_uuid
+          columns:
+          - columns
+          - columns
+          index_name: index_name
+          status: status
+        - index_uuid: index_uuid
+          columns:
+          - columns
+          - columns
+          index_name: index_name
+          status: status
+        name: name
+        namespace:
+        - namespace
+        - namespace
+        location: location
+        properties:
+          key: properties
+      properties:
+        name:
+          description: The table name
+          type: string
+        namespace:
+          description: The namespace identifier
+          items:
+            type: string
+          type: array
+        location:
+          description: Table location (usually empty)
+          type: string
+        properties:
+          additionalProperties:
+            type: string
+          description: Additional properties (usually empty)
+        indexes:
+          description: List of indexes on the table
+          items:
+            $ref: '#/components/schemas/IndexListItemResponse'
+          type: array
+      required:
+      - indexes
+      - location
+      - name
+      - namespace
+    IndexListItemResponse:
+      example:
+        index_uuid: index_uuid
+        columns:
+        - columns
+        - columns
+        index_name: index_name
+        status: status
+      properties:
+        index_name:
+          description: Name of the index
+          type: string
+        index_uuid:
+          description: Unique identifier for the index
+          type: string
+        columns:
+          description: Columns covered by this index
+          items:
+            type: string
+          type: array
+        status:
+          description: Current status of the index
+          type: string
+      required:
+      - columns
+      - index_name
+      - index_uuid
+      - status
+    IndexStatsRequest:
+      example:
+        name: name
+        namespace:
+        - namespace
+        - namespace
+        version: 0
+      properties:
+        name:
+          description: The table name
+          type: string
+        namespace:
+          description: The namespace identifier
+          items:
+            type: string
+          type: array
+        version:
+          description: Optional table version to get stats for
+          format: int64
+          minimum: 0
+          type: integer
+          nullable: true
+      required:
+      - name
+      - namespace
+    IndexStatsResponse:
+      example:
+        distance_type: distance_type
+        num_unindexed_rows: 0
+        num_indexed_rows: 0
+        index_type: index_type
+      properties:
+        distance_type:
+          description: Distance type for vector indexes
+          type: string
+          nullable: true
+        index_type:
+          description: Type of the index
+          type: string
+          nullable: true
+        num_indexed_rows:
+          description: Number of indexed rows
+          format: int64
+          minimum: 0
+          type: integer
+          nullable: true
+        num_unindexed_rows:
+          description: Number of unindexed rows
+          format: int64
+          minimum: 0
+          type: integer
+          nullable: true
+    JsonSchema:
+      description: "JSON representation of a Apache Arrow [Schema]."
+      example:
+        metadata:
+          key: metadata
+        fields:
+        - metadata:
+            key: metadata
+          nullable: true
+          name: name
+          type:
+            length: 0
+            fields: "{}"
+            type: type
+        - metadata:
+            key: metadata
+          nullable: true
+          name: name
+          type:
+            length: 0
+            fields: "{}"
+            type: type
+      properties:
+        fields:
+          items:
+            $ref: '#/components/schemas/JsonField'
+          type: array
+        metadata:
+          additionalProperties:
+            type: string
+      required:
+      - fields
+    JsonField:
+      description: "JSON representation of an Apache Arrow [Field]."
+      example:
+        metadata:
+          key: metadata
+        nullable: true
+        name: name
+        type:
+          length: 0
+          fields: "{}"
+          type: type
+      properties:
+        metadata:
+          additionalProperties:
+            type: string
+        name:
+          type: string
+        nullable:
+          type: boolean
+        type:
+          $ref: '#/components/schemas/JsonDataType'
+      required:
+      - name
+      - nullable
+      - type
+    JsonDataType:
+      description: "JSON representation of an Apache Arrow [DataType]."
+      example:
+        length: 0
+        fields: "{}"
+        type: type
+      properties:
+        fields:
+          type: object
+        length:
+          minimum: 0
+          nullable: true
+          type: integer
+        type:
+          type: string
+      required:
+      - type
+    Binary:
+      format: binary
+      type: string
+    CreateTableResponse:
       example:
         name: name
         namespace:
@@ -1405,4 +2698,18 @@ components:
         properties:
           additionalProperties:
             type: string
+    TableBasicStats:
+      example:
+        num_deleted_rows: 0
+        num_fragments: 0
+      properties:
+        num_deleted_rows:
+          minimum: 0
+          type: integer
+        num_fragments:
+          minimum: 0
+          type: integer
+      required:
+      - num_deleted_rows
+      - num_fragments
 

@@ -17,8 +17,9 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
-from typing import Any, ClassVar, Dict, List
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from typing_extensions import Annotated
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -26,9 +27,10 @@ class DescribeTableRequest(BaseModel):
     """
     DescribeTableRequest
     """ # noqa: E501
-    name: StrictStr
-    namespace: List[StrictStr]
-    __properties: ClassVar[List[str]] = ["name", "namespace"]
+    name: Optional[StrictStr] = None
+    namespace: Optional[List[StrictStr]] = None
+    version: Optional[Annotated[int, Field(strict=True, ge=0)]] = None
+    __properties: ClassVar[List[str]] = ["name", "namespace", "version"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -69,6 +71,11 @@ class DescribeTableRequest(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if version (nullable) is None
+        # and model_fields_set contains the field
+        if self.version is None and "version" in self.model_fields_set:
+            _dict['version'] = None
+
         return _dict
 
     @classmethod
@@ -82,7 +89,8 @@ class DescribeTableRequest(BaseModel):
 
         _obj = cls.model_validate({
             "name": obj.get("name"),
-            "namespace": obj.get("namespace")
+            "namespace": obj.get("namespace"),
+            "version": obj.get("version")
         })
         return _obj
 

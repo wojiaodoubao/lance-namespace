@@ -38,14 +38,11 @@ class TestDescribeTableRequest(unittest.TestCase):
                 name = '',
                 namespace = [
                     ''
-                    ]
+                    ],
+                version = 0
             )
         else:
             return DescribeTableRequest(
-                name = '',
-                namespace = [
-                    ''
-                    ],
         )
         """
 

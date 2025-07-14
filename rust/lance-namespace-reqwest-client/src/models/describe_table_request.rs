@@ -13,17 +13,20 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct DescribeTableRequest {
-    #[serde(rename = "name")]
-    pub name: String,
-    #[serde(rename = "namespace")]
-    pub namespace: Vec<String>,
+    #[serde(rename = "name", skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(rename = "namespace", skip_serializing_if = "Option::is_none")]
+    pub namespace: Option<Vec<String>>,
+    #[serde(rename = "version", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub version: Option<Option<i64>>,
 }
 
 impl DescribeTableRequest {
-    pub fn new(name: String, namespace: Vec<String>) -> DescribeTableRequest {
+    pub fn new() -> DescribeTableRequest {
         DescribeTableRequest {
-            name,
-            namespace,
+            name: None,
+            namespace: None,
+            version: None,
         }
     }
 }
