@@ -23,6 +23,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 // Copied from apache iceberg.
+// https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/ClientPoolImpl.java
 public abstract class ClientPoolImpl<C, E extends Exception>
     implements Closeable, ClientPool<C, E> {
   private static final Logger LOG = LoggerFactory.getLogger(ClientPoolImpl.class);

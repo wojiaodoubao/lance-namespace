@@ -172,5 +172,15 @@
             <property name="illegalPkgs" value="org.apache.log4j" />
             <property name="illegalPkgs" value="org.apache.commons.lang" />
         </module>
+        <module name="IllegalImport">
+            <property name="illegalPkgs" value="org.apache.hadoop.hbase.shaded" />
+            <message key="import.illegal"
+                     value="Do not use HBase shaded classes."/>
+        </module>
+        <module name="IllegalImport">
+            <property name="illegalPkgs" value="org.apache.parquet" />
+            <message key="import.illegal"
+                     value="Do not use Parquet classes directly."/>
+        </module>
     </module>
 </module>

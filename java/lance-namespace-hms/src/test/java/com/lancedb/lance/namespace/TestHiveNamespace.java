@@ -13,12 +13,12 @@
  */
 package com.lancedb.lance.namespace;
 
-import com.lancedb.lance.namespace.hive.LanceHMSNamespace;
+import com.lancedb.lance.namespace.hive.LanceHiveNamespace;
 import com.lancedb.lance.namespace.model.ListNamespacesRequest;
 import com.lancedb.lance.namespace.model.ListNamespacesResponse;
 
 import com.google.common.collect.Maps;
-import org.apache.hadoop.hbase.shaded.com.google.common.collect.Sets;
+import com.google.common.collect.Sets;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.Catalog;
 import org.apache.hadoop.hive.metastore.api.Database;
@@ -30,6 +30,7 @@ import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.thrift.TException;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -49,7 +50,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-public class TestHMSNamespace {
+public class TestHiveNamespace {
   private static TestHiveMetastore metastore;
   private static String tmpDirBase;
 
@@ -71,6 +72,11 @@ public class TestHMSNamespace {
     file.delete();
   }
 
+  @AfterEach
+  public void cleanup() throws Exception {
+    metastore.reset();
+  }
+
   @Test
   public void testListNamespacesV3() throws Exception {
     assumeTrue(HiveVersion.version() == HiveVersion.V3);
@@ -86,7 +92,8 @@ public class TestHMSNamespace {
     initNamespaces(namespaces);
 
     HiveConf hiveConf = metastore.hiveConf();
-    LanceHMSNamespace namespace = new LanceHMSNamespace(hiveConf);
+    LanceHiveNamespace namespace =
+        (LanceHiveNamespace) LanceNamespace.create("test", Maps.newHashMap(), hiveConf);
 
     // Case 1: list root.
     ListNamespacesRequest request = new ListNamespacesRequest();
@@ -174,7 +181,8 @@ public class TestHMSNamespace {
     initNamespaces(namespaces);
 
     HiveConf hiveConf = metastore.hiveConf();
-    LanceHMSNamespace namespace = new LanceHMSNamespace(hiveConf);
+    LanceHiveNamespace namespace =
+        (LanceHiveNamespace) LanceNamespace.create("test", Maps.newHashMap(), hiveConf);
 
     ListNamespacesRequest request = new ListNamespacesRequest();
     request.setParent(Lists.list("hive"));
@@ -209,6 +217,12 @@ public class TestHMSNamespace {
     request.setPageToken("z");
     response = namespace.listNamespaces(request);
     assertEquals(0, response.getNamespaces().size());
+
+    // Case 4: invalid page size.
+    request.setPageSize(0);
+    assertThrows(IllegalArgumentException.class, () -> namespace.listNamespaces(request));
+    request.setPageSize(-1);
+    assertThrows(IllegalArgumentException.class, () -> namespace.listNamespaces(request));
   }
 
   private static void initNamespaces(Map<String, Map<String, Set<String>>> namespaces)

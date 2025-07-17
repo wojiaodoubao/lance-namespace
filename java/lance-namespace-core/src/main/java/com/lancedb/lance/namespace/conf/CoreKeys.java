@@ -13,7 +13,8 @@
  */
 package com.lancedb.lance.namespace.conf;
 
-public class ConfKeys {
-  public static final String HMS_CLIENT_POOL_SIZE = "lance.namespace.hms.client-pool-size";
-  public static final String HMS_CLIENT_POOL_SIZE_DEFAULT = "3";
+public class CoreKeys {
+  public static final String CATALOG_IMPL = "lance.namespace.catalog-impl";
+  public static final String CATALOG_IMPL_DEFAULT =
+      "com.lancedb.lance.namespace.hive.LanceHiveNamespace";
 }

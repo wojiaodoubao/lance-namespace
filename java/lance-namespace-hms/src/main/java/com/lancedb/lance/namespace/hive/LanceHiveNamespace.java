@@ -13,10 +13,10 @@
  */
 package com.lancedb.lance.namespace.hive;
 
+import com.lancedb.lance.namespace.Configurable;
 import com.lancedb.lance.namespace.HiveVersion;
 import com.lancedb.lance.namespace.LanceNamespace;
 import com.lancedb.lance.namespace.ObjectIdentifier;
-import com.lancedb.lance.namespace.conf.ConfKeys;
 import com.lancedb.lance.namespace.model.AlterTransactionRequest;
 import com.lancedb.lance.namespace.model.AlterTransactionResponse;
 import com.lancedb.lance.namespace.model.CountRowsRequest;
@@ -58,21 +58,47 @@ import com.lancedb.lance.namespace.model.TableExistsResponse;
 import com.lancedb.lance.namespace.model.UpdateTableRequest;
 import com.lancedb.lance.namespace.model.UpdateTableResponse;
 import com.lancedb.lance.namespace.util.PageUtils;
+import com.lancedb.lance.namespace.util.ValidationUtil;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-public class LanceHMSNamespace implements LanceNamespace {
+import static com.lancedb.lance.namespace.conf.ConfKeys.HMS_CLIENT_POOL_SIZE;
+import static com.lancedb.lance.namespace.conf.ConfKeys.HMS_CLIENT_POOL_SIZE_DEFAULT;
+
+public class LanceHiveNamespace implements LanceNamespace, Configurable<Configuration> {
+  private static final Logger LOG = LoggerFactory.getLogger(LanceHiveNamespace.class);
+
   private HiveClientPool clientPool;
+  private String name;
+  private Map<String, String> properties;
+  private Configuration hadoopConf;
 
-  public LanceHMSNamespace(Configuration conf) {
-    int poolSize = ConfKeys.HMS_CLIENT_POOL_SIZE.readValue(conf);
-    this.clientPool = new HiveClientPool(poolSize, conf);
+  public LanceHiveNamespace() {}
+
+  @Override
+  public void initialize(String name, Map<String, String> properties) {
+    if (hadoopConf == null) {
+      LOG.warn("Hadoop configuration not set, using the default configuration.");
+      hadoopConf = new Configuration();
+    }
+
+    this.name = name;
+    this.properties = properties;
+
+    int poolSize =
+        Integer.parseInt(
+            properties.getOrDefault(HMS_CLIENT_POOL_SIZE, HMS_CLIENT_POOL_SIZE_DEFAULT));
+
+    this.clientPool = new HiveClientPool(poolSize, hadoopConf);
   }
 
   @Override
@@ -101,13 +127,14 @@ public class LanceHMSNamespace implements LanceNamespace {
   }
 
   private List<String> listNamespacesV2(ObjectIdentifier parent) {
+    ValidationUtil.checkArgument(
+        parent.size() <= 2, "Expect a 2-level namespace but get %s", parent);
+
     try {
       if (parent.empty()) {
         return clientPool.run(client -> client.getAllDatabases());
-      } else if (parent.size() <= 2) {
-        return Lists.newArrayList();
       } else {
-        throw new RuntimeException(String.format("Namespace parent {} is too long.", parent));
+        return Lists.newArrayList();
       }
     } catch (TException e) {
       throw new RuntimeException(e);
@@ -117,15 +144,16 @@ public class LanceHMSNamespace implements LanceNamespace {
   }
 
   private List<String> listNamespacesV3(ObjectIdentifier parent) {
+    ValidationUtil.checkArgument(
+        parent.size() <= 3, "Expect a 3-level namespace but get %s", parent);
+
     try {
       if (parent.empty()) {
         return clientPool.run(client -> client.getCatalogs());
       } else if (parent.size() == 1) {
         return clientPool.run(client -> client.getAllDatabases(parent.level(0)));
-      } else if (parent.size() <= 3) {
-        return Lists.newArrayList();
       } else {
-        throw new RuntimeException(String.format("Namespace parent {} is too long.", parent));
+        return Lists.newArrayList();
       }
     } catch (TException e) {
       throw new RuntimeException(e);
@@ -136,42 +164,42 @@ public class LanceHMSNamespace implements LanceNamespace {
 
   @Override
   public DescribeNamespaceResponse describeNamespace(DescribeNamespaceRequest request) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
   public CreateNamespaceResponse createNamespace(CreateNamespaceRequest request) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
   public DropNamespaceResponse dropNamespace(DropNamespaceRequest request) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
   public NamespaceExistsResponse namespaceExists(NamespaceExistsRequest request) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
   public DescribeTableResponse describeTable(DescribeTableRequest request) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
   public Long countRows(CountRowsRequest request) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
   public CreateTableResponse createTable(String tableName, byte[] arrowIpcData) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
   public InsertTableResponse insertTable(String tableName, byte[] arrowIpcData, String mode) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
@@ -181,17 +209,17 @@ public class LanceHMSNamespace implements LanceNamespace {
       String on,
       Boolean whenMatchedUpdateAll,
       Boolean whenNotMatchedInsertAll) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
   public UpdateTableResponse updateTable(UpdateTableRequest request) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
   public DeleteFromTableResponse deleteFromTable(DeleteFromTableRequest request) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
@@ -201,51 +229,56 @@ public class LanceHMSNamespace implements LanceNamespace {
 
   @Override
   public CreateIndexResponse createIndex(CreateIndexRequest request) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
   public CreateIndexResponse createScalarIndex(CreateIndexRequest request) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
   public IndexListResponse listIndices(IndexListRequest request) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
   public IndexStatsResponse getIndexStats(IndexStatsRequest request, String indexName) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
   public RegisterTableResponse registerTable(RegisterTableRequest request) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
   public TableExistsResponse tableExists(TableExistsRequest request) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
   public DropTableResponse dropTable(DropTableRequest request) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
   public DeregisterTableResponse deregisterTable(DeregisterTableRequest request) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
   public DescribeTransactionResponse describeTransaction(DescribeTransactionRequest request) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
   public AlterTransactionResponse alterTransaction(AlterTransactionRequest request) {
-    return null;
+    throw new UnsupportedOperationException("Not supported");
+  }
+
+  @Override
+  public void setConf(Configuration conf) {
+    this.hadoopConf = conf;
   }
 }

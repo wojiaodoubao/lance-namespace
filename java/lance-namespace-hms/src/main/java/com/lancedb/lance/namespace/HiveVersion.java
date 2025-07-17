@@ -22,7 +22,7 @@ public enum HiveVersion {
   V2,
   V3;
 
-  private static volatile Optional<HiveVersion> version = Optional.empty();
+  private static Optional<HiveVersion> version = Optional.empty();
 
   public static HiveVersion version() {
     if (version.isPresent()) {
@@ -40,7 +40,7 @@ public enum HiveVersion {
         }
       }
 
-      if (version.isEmpty()) {
+      if (!version.isPresent()) {
         version = Optional.of(HiveVersion.V2);
       }
 

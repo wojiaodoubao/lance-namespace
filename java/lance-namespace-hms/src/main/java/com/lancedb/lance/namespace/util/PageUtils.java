@@ -13,8 +13,6 @@
  */
 package com.lancedb.lance.namespace.util;
 
-import org.apache.parquet.Strings;
-
 import java.util.List;
 
 public class PageUtils {
@@ -40,7 +38,7 @@ public class PageUtils {
 
   public static Page splitPage(List<String> items, String pageToken, int pageSize) {
     int left = 0;
-    if (!Strings.isNullOrEmpty(pageToken)) {
+    if (!ValidationUtil.isNullOrEmpty(pageToken)) {
       while (left < items.size()) {
         if (items.get(left).compareTo(pageToken) >= 0) {
           break;
@@ -56,9 +54,11 @@ public class PageUtils {
   }
 
   public static int normalizePageSize(Integer pageSize) {
-    if (pageSize == null || pageSize <= 0) {
+    if (pageSize == null) {
       return Integer.MAX_VALUE;
     }
+
+    ValidationUtil.checkArgument(pageSize > 0, "Page size must be greater than 0");
     return pageSize;
   }
 }

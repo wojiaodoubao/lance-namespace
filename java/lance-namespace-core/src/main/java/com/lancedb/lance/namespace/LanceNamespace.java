@@ -13,6 +13,7 @@
  */
 package com.lancedb.lance.namespace;
 
+import com.lancedb.lance.namespace.conf.CoreKeys;
 import com.lancedb.lance.namespace.model.AlterTransactionRequest;
 import com.lancedb.lance.namespace.model.AlterTransactionResponse;
 import com.lancedb.lance.namespace.model.CountRowsRequest;
@@ -53,9 +54,40 @@ import com.lancedb.lance.namespace.model.TableExistsRequest;
 import com.lancedb.lance.namespace.model.TableExistsResponse;
 import com.lancedb.lance.namespace.model.UpdateTableRequest;
 import com.lancedb.lance.namespace.model.UpdateTableResponse;
+import com.lancedb.lance.namespace.util.DynConstructors;
+
+import java.util.Map;
 
 /** TODO: add documentation */
 public interface LanceNamespace {
+  static LanceNamespace create(String name, Map<String, String> properties, Object conf) {
+    String impl = properties.getOrDefault(CoreKeys.CATALOG_IMPL, CoreKeys.CATALOG_IMPL_DEFAULT);
+
+    LanceNamespace ns;
+    try {
+      ns =
+          (LanceNamespace)
+              DynConstructors.builder(LanceNamespace.class).impl(impl).buildChecked().newInstance();
+    } catch (NoSuchMethodException e) {
+      throw new IllegalArgumentException(
+          String.format("Failed to construct namespace, impl: %s", impl), e);
+    }
+
+    if (ns instanceof Configurable && conf != null) {
+      ((Configurable) ns).setConf(conf);
+    }
+
+    ns.initialize(name, properties);
+    return ns;
+  }
+
+  /**
+   * Initialize catalog with custom name and conf properties.
+   *
+   * @param name a custom name for the catalog
+   * @param properties catalog conf properties
+   */
+  default void initialize(String name, Map<String, String> properties) {}
 
   ListNamespacesResponse listNamespaces(ListNamespacesRequest request);
 

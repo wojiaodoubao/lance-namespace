@@ -16,8 +16,8 @@ package com.lancedb.lance.namespace.hive;
 import com.google.errorprone.annotations.FormatMethod;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 
-/** Exception used to wrap {@link MetaException} as a {@link RuntimeException} and add context. */
 // Copied from apache iceberg.
+// https://github.com/apache/iceberg/blob/main/hive-metastore/src/main/java/org/apache/iceberg/hive/RuntimeMetaException.java
 public class RuntimeMetaException extends RuntimeException {
   public RuntimeMetaException(MetaException cause) {
     super(cause);

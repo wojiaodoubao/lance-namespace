@@ -14,7 +14,7 @@
 package com.lancedb.lance.namespace.hive;
 
 import com.lancedb.lance.namespace.ClientPoolImpl;
-import com.lancedb.lance.namespace.DynMethods;
+import com.lancedb.lance.namespace.util.DynMethods;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
@@ -28,6 +28,7 @@ import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
 // Copied from apache iceberg.
+// https://github.com/apache/iceberg/blob/main/hive-metastore/src/main/java/org/apache/iceberg/hive/HiveClientPool.java
 public class HiveClientPool extends ClientPoolImpl<IMetaStoreClient, TException> {
 
   private static final DynMethods.StaticMethod GET_CLIENT =

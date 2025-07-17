@@ -37,4 +37,8 @@ public class ValidationUtil {
       throw new IllegalStateException(String.format(message, args));
     }
   }
+
+  public static boolean isNullOrEmpty(String str) {
+    return str == null || str.isEmpty();
+  }
 }

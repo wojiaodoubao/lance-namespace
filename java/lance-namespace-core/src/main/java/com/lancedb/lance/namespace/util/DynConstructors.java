@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lancedb.lance.namespace;
+package com.lancedb.lance.namespace.util;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Map;
 
 // Copied from apache iceberg.
+// https://github.com/apache/iceberg/blob/main/common/src/main/java/org/apache/iceberg/common/DynConstructors.java
 public class DynConstructors {
 
   private DynConstructors() {}

@@ -199,3 +199,20 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+
+--------------------------------------------------------------------------------
+
+This product includes code from Apache Iceberg. The following files are copied from iceberg, and some of them have been slightly modified.
+
+* DynMethods.java
+* DynConstructors.java
+* Configurable.java
+* ClientPool.java
+* ClientPoolImpl.java
+* HiveClientPool.java
+* RuntimeMetaException.java
+* TestHiveMetastore.java
+
+Copyright: 2004-2025 The Apache Software Foundation.
+Home page: https://iceberg.apache.org/
+License: https://www.apache.org/licenses/LICENSE-2.0

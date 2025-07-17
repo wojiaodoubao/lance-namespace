@@ -14,8 +14,9 @@
 package com.lancedb.lance.namespace;
 
 import com.lancedb.lance.namespace.hive.HiveClientPool;
+import com.lancedb.lance.namespace.util.DynConstructors;
+import com.lancedb.lance.namespace.util.DynMethods;
 
-import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -33,12 +34,7 @@ import org.apache.thrift.transport.TTransportFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -48,6 +44,7 @@ import static java.nio.file.attribute.PosixFilePermissions.fromString;
 import static org.assertj.core.api.Assertions.assertThat;
 
 // Copied from apache iceberg.
+// https://github.com/apache/iceberg/blob/main/hive-metastore/src/test/java/org/apache/iceberg/hive/TestHiveMetastore.java
 public class TestHiveMetastore {
 
   private static final String DEFAULT_DATABASE_NAME = "default";
@@ -97,7 +94,6 @@ public class TestHiveMetastore {
       DERBY_PATH = new File(HIVE_LOCAL_DIR, "metastore_db").getPath();
       File derbyLogFile = new File(HIVE_LOCAL_DIR, "derby.log");
       System.setProperty("derby.stream.error.file", derbyLogFile.getAbsolutePath());
-      //      setupMetastoreDB("jdbc:derby:" + DERBY_PATH + ";create=true");
       Runtime.getRuntime()
           .addShutdownHook(
               new Thread(
@@ -215,23 +211,9 @@ public class TestHiveMetastore {
 
   public void reset() throws Exception {
     if (clientPool != null) {
-      for (String dbName : clientPool.run(client -> client.getAllDatabases())) {
-        for (String tblName : clientPool.run(client -> client.getAllTables(dbName))) {
-          clientPool.run(
-              client -> {
-                client.dropTable(dbName, tblName, true, true, true);
-                return null;
-              });
-        }
-
-        if (!DEFAULT_DATABASE_NAME.equals(dbName)) {
-          // Drop cascade, functions dropped by cascade
-          clientPool.run(
-              client -> {
-                client.dropDatabase(dbName, true, true, true);
-                return null;
-              });
-        }
+      List<String> catalogs = clientPool.run(client -> client.getCatalogs());
+      for (String catalog : catalogs) {
+        cleanup(catalog);
       }
     }
 
@@ -242,6 +224,37 @@ public class TestHiveMetastore {
           && !fileStatus.getPath().getName().equals("metastore_db")) {
         fs.delete(fileStatus.getPath(), true);
       }
+    }
+  }
+
+  private void cleanup(String catalog) throws Exception {
+    if (clientPool != null) {
+      for (String dbName : clientPool.run(client -> client.getAllDatabases(catalog))) {
+        for (String tblName : clientPool.run(client -> client.getAllTables(catalog, dbName))) {
+          clientPool.run(
+              client -> {
+                client.dropTable(catalog, dbName, tblName, true, true, true);
+                return null;
+              });
+        }
+
+        if (!DEFAULT_DATABASE_NAME.equals(dbName)) {
+          // Drop cascade, functions dropped by cascade
+          clientPool.run(
+              client -> {
+                client.dropDatabase(catalog, dbName, true, true, true);
+                return null;
+              });
+        }
+      }
+    }
+
+    if (!catalog.equals("hive")) {
+      clientPool.run(
+          client -> {
+            client.dropCatalog(catalog);
+            return null;
+          });
     }
   }
 
@@ -280,20 +293,5 @@ public class TestHiveMetastore {
     conf.set(
         HiveConf.ConfVars.HIVE_IN_TEST.varname, HiveConf.ConfVars.HIVE_IN_TEST.getDefaultValue());
     conf.set("datanucleus.connectionPoolingType", "DBCP");
-  }
-
-  private static void setupMetastoreDB(String dbURL) throws SQLException, IOException {
-    try (Connection connection = DriverManager.getConnection(dbURL)) {
-      ScriptRunner scriptRunner = new ScriptRunner(connection, true, true);
-      try (InputStream inputStream =
-              TestHiveMetastore.class
-                  .getClassLoader()
-                  .getResourceAsStream("hive-schema-3.1.0.derby.sql");
-          Reader reader =
-              new InputStreamReader(
-                  Preconditions.checkNotNull(inputStream, "Invalid input stream: null"))) {
-        scriptRunner.runScript(reader);
-      }
-    }
   }
 }

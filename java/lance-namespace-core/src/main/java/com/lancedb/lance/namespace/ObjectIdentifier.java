@@ -13,6 +13,9 @@
  */
 package com.lancedb.lance.namespace;
 
+import com.google.common.collect.ImmutableList;
+
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,6 +36,16 @@ public class ObjectIdentifier {
 
   public String level(int pos) {
     return levels[pos];
+  }
+
+  public String name() {
+    return empty() ? "" : levels[levels.length - 1];
+  }
+
+  public List<String> parent() {
+    return size() < 2
+        ? ImmutableList.of()
+        : ImmutableList.copyOf(Arrays.copyOfRange(levels, 0, levels.length - 1));
   }
 
   public int size() {

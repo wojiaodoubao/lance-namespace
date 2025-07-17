@@ -14,6 +14,7 @@
 package com.lancedb.lance.namespace;
 
 // Copied from apache iceberg.
+// https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/ClientPool.java
 public interface ClientPool<C, E extends Exception> {
   interface Action<R, C, E extends Exception> {
     R run(C client) throws E;

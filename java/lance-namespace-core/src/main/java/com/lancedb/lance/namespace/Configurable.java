@@ -11,9 +11,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lancedb.lance.namespace.conf;
+package com.lancedb.lance.namespace;
 
-public class ConfKeys {
-  public static final String HMS_CLIENT_POOL_SIZE = "lance.namespace.hms.client-pool-size";
-  public static final String HMS_CLIENT_POOL_SIZE_DEFAULT = "3";
+// Copied from apache iceberg.
+// https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/hadoop/Configurable.java
+public interface Configurable<C> {
+  void setConf(C conf);
 }
