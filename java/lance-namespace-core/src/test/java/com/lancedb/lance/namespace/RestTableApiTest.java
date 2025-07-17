@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -470,6 +471,469 @@ public class RestTableApiTest {
     assertNotNull(dropResponse, "Drop table response should not be null");
   }
 
+  @Test
+  public void testAdvancedQueryFeatures() throws IOException {
+    assumeTrue(
+        DATABASE != null && API_KEY != null,
+        "Skipping test: LANCEDB_DB and LANCEDB_API_KEY environment variables must be set");
+
+    System.out.println("\n=== Test: Advanced Query Features ===");
+    String tableName = "test_advanced_query_" + System.currentTimeMillis();
+
+    try {
+      // Create table with more rows for better testing
+      CreateTableResponse createResponse = createTableHelper(tableName, 100);
+      assertNotNull(createResponse, "Create response should not be null");
+
+      // Test 1: Query with filter
+      System.out.println("\n--- Test 1: Query with filter ---");
+      QueryRequest filterQuery = new QueryRequest();
+      filterQuery.setName(tableName);
+      filterQuery.setK(10);
+      filterQuery.setFilter("id > 50"); // SQL filter
+      // Don't set vector for filter-only queries
+
+      byte[] filterResult = namespace.queryTable(filterQuery);
+      assertNotNull(filterResult, "Filter query result should not be null");
+      verifyQueryResultRowCount(filterResult, 10, "Filter query");
+
+      // Test 2: Query with prefilter
+      System.out.println("\n--- Test 4: Query with prefilter ---");
+      QueryRequest prefilterQuery = new QueryRequest();
+      prefilterQuery.setName(tableName);
+      prefilterQuery.setK(5);
+      prefilterQuery.setPrefilter(true);
+      prefilterQuery.setFilter("id < 20");
+
+      byte[] prefilterResult = namespace.queryTable(prefilterQuery);
+      assertNotNull(prefilterResult, "Prefilter query result should not be null");
+
+      // Test 3: Query with fast_search true
+      System.out.println("\n--- Test 5: Query with fast_search=true ---");
+      QueryRequest fastSearchQuery = new QueryRequest();
+      fastSearchQuery.setName(tableName);
+      List<Float> fastSearchVector = new ArrayList<>();
+      for (int i = 0; i < 128; i++) {
+        fastSearchVector.add((float) (i % 10));
+      }
+      fastSearchQuery.setVector(fastSearchVector);
+      fastSearchQuery.setK(10);
+      fastSearchQuery.setFastSearch(true);
+
+      byte[] fastSearchResult = namespace.queryTable(fastSearchQuery);
+      assertNotNull(fastSearchResult, "Fast search query result should not be null");
+      verifyQueryResultRowCount(fastSearchResult, 10, "Fast search query");
+
+      // Test 4: Query with fast_search false
+      System.out.println("\n--- Test 6: Query with fast_search=false ---");
+      QueryRequest noFastSearchQuery = new QueryRequest();
+      noFastSearchQuery.setName(tableName);
+      List<Float> noFastSearchVector = new ArrayList<>();
+      for (int i = 0; i < 128; i++) {
+        noFastSearchVector.add((float) (i % 10));
+      }
+      noFastSearchQuery.setVector(noFastSearchVector);
+      noFastSearchQuery.setK(10);
+      noFastSearchQuery.setFastSearch(false);
+
+      byte[] noFastSearchResult = namespace.queryTable(noFastSearchQuery);
+      assertNotNull(noFastSearchResult, "No fast search query result should not be null");
+      verifyQueryResultRowCount(noFastSearchResult, 10, "No fast search query");
+
+    } finally {
+      dropTableHelper(tableName);
+    }
+  }
+
+  @Test
+  public void testDescribeTableWithVersion() throws IOException {
+    assumeTrue(
+        DATABASE != null && API_KEY != null,
+        "Skipping test: LANCEDB_DB and LANCEDB_API_KEY environment variables must be set");
+
+    System.out.println("\n=== Test: Describe Table With Version ===");
+    String tableName = "test_describe_version_" + System.currentTimeMillis();
+
+    try {
+      // Create table
+      CreateTableResponse createResponse = createTableHelper(tableName, 5);
+      assertNotNull(createResponse, "Create response should not be null");
+
+      // Get initial version
+      DescribeTableRequest describeV1 = new DescribeTableRequest();
+      describeV1.setName(tableName);
+      DescribeTableResponse v1Response = namespace.describeTable(describeV1);
+      Long version1 = v1Response.getVersion();
+      System.out.println("Initial version: " + version1);
+
+      // Insert more data to create new version
+      insertTableHelper(tableName, 5, "append");
+
+      // Describe current version
+      DescribeTableRequest describeCurrent = new DescribeTableRequest();
+      describeCurrent.setName(tableName);
+      DescribeTableResponse currentResponse = namespace.describeTable(describeCurrent);
+      Long currentVersion = currentResponse.getVersion();
+      System.out.println("Current version after insert: " + currentVersion);
+      assertTrue(currentVersion > version1, "Version should increase after insert");
+
+      // Describe specific older version
+      DescribeTableRequest describeOldVersion = new DescribeTableRequest();
+      describeOldVersion.setName(tableName);
+      describeOldVersion.setVersion(version1);
+      DescribeTableResponse oldVersionResponse = namespace.describeTable(describeOldVersion);
+
+      assertEquals(version1, oldVersionResponse.getVersion(), "Should return requested version");
+
+      // Verify nested structures in response
+      assertNotNull(oldVersionResponse.getSchema(), "Schema should not be null");
+      assertNotNull(oldVersionResponse.getSchema().getFields(), "Schema fields should not be null");
+
+      // Check JsonField structure
+      for (JsonField field : oldVersionResponse.getSchema().getFields()) {
+        assertNotNull(field.getName(), "Field name should not be null");
+        assertNotNull(field.getType(), "Field type should not be null");
+        assertNotNull(field.getNullable(), "Field nullable should not be null");
+
+        // Check JsonDataType structure
+        JsonDataType dataType = field.getType();
+        assertNotNull(dataType.getType(), "Data type name should not be null");
+
+        // For FixedSizeList (embedding field), check nested fields
+        if ("embedding".equals(field.getName())) {
+          assertNotNull(dataType.getFields(), "Embedding field should have nested fields");
+          assertFalse(dataType.getFields().isEmpty(), "Embedding field should have item field");
+        }
+      }
+
+      // Verify TableBasicStats structure
+      TableBasicStats stats = oldVersionResponse.getStats();
+      assertNotNull(stats, "Stats should not be null");
+      assertNotNull(stats.getNumDeletedRows(), "Num deleted rows should not be null");
+      assertNotNull(stats.getNumFragments(), "Num fragments should not be null");
+      assertTrue(stats.getNumFragments() >= 0, "Num fragments should be non-negative");
+
+      System.out.println("✓ Describe table with version tested successfully");
+
+    } finally {
+      dropTableHelper(tableName);
+    }
+  }
+
+  @Test
+  public void testFtsQuery() throws IOException {
+    assumeTrue(
+        DATABASE != null && API_KEY != null,
+        "Skipping test: LANCEDB_DB and LANCEDB_API_KEY environment variables must be set");
+
+    System.out.println("\n=== Test: Full-Text Search Query ===");
+    String tableName = "test_fts_query_" + System.currentTimeMillis();
+
+    try {
+      // Create table with text data
+      CreateTableResponse createResponse = createTextTableHelper(tableName, 50);
+      assertNotNull(createResponse, "Create response should not be null");
+
+      // Create FTS index
+      System.out.println("\n--- Creating FTS index ---");
+      CreateIndexRequest ftsIndexRequest = new CreateIndexRequest();
+      ftsIndexRequest.setName(tableName);
+      ftsIndexRequest.setColumn("text");
+      ftsIndexRequest.setIndexType(CreateIndexRequest.IndexTypeEnum.FTS);
+
+      CreateIndexResponse ftsIndexResponse = namespace.createIndex(ftsIndexRequest);
+      assertNotNull(ftsIndexResponse, "FTS index response should not be null");
+
+      waitForIndexComplete(tableName, "text_idx", 30);
+
+      // Test 1: Simple string FTS query
+      System.out.println("\n--- Test 1: Simple string FTS query ---");
+      QueryRequest stringFtsQuery = new QueryRequest();
+      stringFtsQuery.setName(tableName);
+      stringFtsQuery.setK(10);
+
+      StringFtsQuery simpleFts = new StringFtsQuery();
+      simpleFts.setQuery("document");
+      stringFtsQuery.setFullTextQuery(simpleFts);
+
+      byte[] ftsResult = namespace.queryTable(stringFtsQuery);
+      assertNotNull(ftsResult, "FTS query result should not be null");
+
+      // Test 2: FTS with prefilter
+      System.out.println("\n--- Test 2: FTS with prefilter ---");
+      QueryRequest ftsPrefilterQuery = new QueryRequest();
+      ftsPrefilterQuery.setName(tableName);
+      ftsPrefilterQuery.setK(5);
+      ftsPrefilterQuery.setPrefilter(true);
+      ftsPrefilterQuery.setFilter("id < 25");
+      ftsPrefilterQuery.setFullTextQuery(simpleFts);
+
+      byte[] ftsPrefilterResult = namespace.queryTable(ftsPrefilterQuery);
+      assertNotNull(ftsPrefilterResult, "FTS prefilter query result should not be null");
+
+      System.out.println("✓ FTS query tests completed successfully");
+
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      fail("Test interrupted");
+    } finally {
+      dropTableHelper(tableName);
+    }
+  }
+
+  /** Helper method to create a table with text data for FTS testing */
+  private CreateTableResponse createTextTableHelper(String tableName, int numRows)
+      throws IOException {
+    // Create Arrow schema with text field
+    Field idField = new Field("id", FieldType.nullable(new ArrowType.Int(32, true)), null);
+    Field textField = new Field("text", FieldType.nullable(new ArrowType.Utf8()), null);
+    Field embeddingField =
+        new Field(
+            "embedding",
+            FieldType.nullable(new ArrowType.FixedSizeList(128)),
+            Arrays.asList(
+                new Field(
+                    "item",
+                    FieldType.nullable(new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE)),
+                    null)));
+
+    Schema schema = new Schema(Arrays.asList(idField, textField, embeddingField));
+
+    try (VectorSchemaRoot root = VectorSchemaRoot.create(schema, allocator)) {
+      IntVector idVector = (IntVector) root.getVector("id");
+      VarCharVector textVector = (VarCharVector) root.getVector("text");
+      FixedSizeListVector vectorVector = (FixedSizeListVector) root.getVector("embedding");
+
+      root.setRowCount(numRows);
+
+      // Sample text patterns for FTS
+      String[] textTemplates = {
+        "This is document number %d",
+        "Sample text for entry %d",
+        "Test document with id %d",
+        "Record %d contains important data",
+        "Entry %d in the database"
+      };
+
+      // Populate data
+      for (int i = 0; i < numRows; i++) {
+        idVector.setSafe(i, i + 1);
+        String text = String.format(textTemplates[i % textTemplates.length], i);
+        textVector.setSafe(i, text.getBytes(StandardCharsets.UTF_8));
+      }
+
+      // Populate vector field
+      Float4Vector dataVector = (Float4Vector) vectorVector.getDataVector();
+      vectorVector.allocateNew();
+
+      for (int row = 0; row < numRows; row++) {
+        vectorVector.setNotNull(row);
+        for (int dim = 0; dim < 128; dim++) {
+          int index = row * 128 + dim;
+          dataVector.setSafe(index, (float) (Math.random() * 10.0));
+        }
+      }
+
+      idVector.setValueCount(numRows);
+      textVector.setValueCount(numRows);
+      dataVector.setValueCount(numRows * 128);
+      vectorVector.setValueCount(numRows);
+
+      // Serialize to Arrow IPC format
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      try (ArrowStreamWriter writer = new ArrowStreamWriter(root, null, Channels.newChannel(out))) {
+        writer.start();
+        writer.writeBatch();
+        writer.end();
+      }
+
+      byte[] arrowIpcData = out.toByteArray();
+
+      CreateTableResponse response = namespace.createTable(tableName, arrowIpcData);
+      System.out.println("✓ Text table created: " + tableName + " with " + numRows + " rows");
+
+      return response;
+    }
+  }
+
+  /** Helper method to wait for index creation */
+  private boolean waitForIndex(String tableName, String indexName, int maxSeconds)
+      throws InterruptedException {
+    IndexListRequest listRequest = new IndexListRequest();
+    listRequest.setName(tableName);
+
+    for (int i = 0; i < maxSeconds; i++) {
+      IndexListResponse listResponse = namespace.listIndices(listRequest);
+      if (listResponse.getIndexes() != null
+          && listResponse.getIndexes().stream()
+              .anyMatch(idx -> idx.getIndexName().equals(indexName))) {
+        return true;
+      }
+      Thread.sleep(1000);
+    }
+    return false;
+  }
+
+  /** Helper method to wait for index to be fully built with no unindexed rows */
+  private boolean waitForIndexComplete(String tableName, String indexName, int maxSeconds)
+      throws InterruptedException {
+    IndexListRequest listRequest = new IndexListRequest();
+    listRequest.setName(tableName);
+
+    for (int i = 0; i < maxSeconds; i++) {
+      IndexListResponse listResponse = namespace.listIndices(listRequest);
+      if (listResponse.getIndexes() != null) {
+        Optional<IndexListItemResponse> indexOpt =
+            listResponse.getIndexes().stream()
+                .filter(idx -> idx.getIndexName().equals(indexName))
+                .findFirst();
+
+        if (indexOpt.isPresent()) {
+          // Index exists, now check if it's fully built
+          IndexStatsRequest statsRequest = new IndexStatsRequest();
+          statsRequest.setName(tableName);
+
+          IndexStatsResponse stats = namespace.getIndexStats(statsRequest, indexName);
+          if (stats != null
+              && stats.getNumUnindexedRows() != null
+              && stats.getNumUnindexedRows() == 0) {
+            System.out.println("✓ Index " + indexName + " is fully built with 0 unindexed rows");
+            return true;
+          } else if (stats != null && stats.getNumUnindexedRows() != null) {
+            System.out.println(
+                "  Waiting for index... " + stats.getNumUnindexedRows() + " rows remaining");
+          }
+        }
+      }
+      Thread.sleep(1000);
+    }
+    return false;
+  }
+
+  /** Helper method to verify query result row count */
+  private void verifyQueryResultRowCount(byte[] queryResult, int expectedRows, String testName)
+      throws IOException {
+    try (BufferAllocator verifyAllocator = new RootAllocator()) {
+      ByteArraySeekableByteChannel channel = new ByteArraySeekableByteChannel(queryResult);
+      try (ArrowFileReader reader = new ArrowFileReader(channel, verifyAllocator)) {
+        int totalRows = 0;
+        for (int i = 0; i < reader.getRecordBlocks().size(); i++) {
+          reader.loadRecordBatch(reader.getRecordBlocks().get(i));
+          VectorSchemaRoot root = reader.getVectorSchemaRoot();
+          totalRows += root.getRowCount();
+        }
+        assertEquals(
+            expectedRows, totalRows, testName + " should return " + expectedRows + " rows");
+      }
+    }
+  }
+
+  @Test
+  public void testHybridSearch() throws IOException, InterruptedException {
+    assumeTrue(
+        DATABASE != null && API_KEY != null,
+        "Skipping test: LANCEDB_DB and LANCEDB_API_KEY environment variables must be set");
+
+    System.out.println("\n=== Test: Hybrid Search (Vector + Full-Text) ===");
+    String tableName = "test_hybrid_search_" + System.currentTimeMillis();
+
+    try {
+      // Create table with text and vector data
+      CreateTableResponse createResponse = createTextTableHelper(tableName, 50);
+      assertNotNull(createResponse, "Create response should not be null");
+
+      // Create FTS index
+      System.out.println("\n--- Creating FTS index for hybrid search ---");
+      CreateIndexRequest ftsIndexRequest = new CreateIndexRequest();
+      ftsIndexRequest.setName(tableName);
+      ftsIndexRequest.setColumn("text");
+      ftsIndexRequest.setIndexType(CreateIndexRequest.IndexTypeEnum.FTS);
+
+      CreateIndexResponse ftsIndexResponse = namespace.createIndex(ftsIndexRequest);
+      assertNotNull(ftsIndexResponse, "FTS index response should not be null");
+
+      waitForIndexComplete(tableName, "text_idx", 30);
+
+      // Test 1: Hybrid search with vector and text
+      System.out.println("\n--- Test 1: Hybrid search with vector and full-text query ---");
+      QueryRequest hybridQuery = new QueryRequest();
+      hybridQuery.setName(tableName);
+
+      // Add vector search
+      List<Float> queryVector = new ArrayList<>();
+      for (int i = 0; i < 128; i++) {
+        queryVector.add((float) (i % 10));
+      }
+      hybridQuery.setVector(queryVector);
+      hybridQuery.setK(10);
+
+      // Add full-text search
+      StringFtsQuery ftsQuery = new StringFtsQuery();
+      ftsQuery.setQuery("document");
+      hybridQuery.setFullTextQuery(ftsQuery);
+
+      byte[] hybridResult = namespace.queryTable(hybridQuery);
+      assertNotNull(hybridResult, "Hybrid search result should not be null");
+      System.out.println("✓ Hybrid search completed successfully");
+
+      // Test 2: Hybrid search with filter
+      System.out.println("\n--- Test 2: Hybrid search with vector, text, and filter ---");
+      QueryRequest hybridFilterQuery = new QueryRequest();
+      hybridFilterQuery.setName(tableName);
+
+      // Add vector search
+      List<Float> queryVector2 = new ArrayList<>();
+      for (int i = 0; i < 128; i++) {
+        queryVector2.add((float) (i % 5));
+      }
+      hybridFilterQuery.setVector(queryVector2);
+      hybridFilterQuery.setK(5);
+
+      // Add full-text search
+      StringFtsQuery ftsQuery2 = new StringFtsQuery();
+      ftsQuery2.setQuery("entry");
+      hybridFilterQuery.setFullTextQuery(ftsQuery2);
+
+      // Add filter
+      hybridFilterQuery.setFilter("id < 30");
+
+      byte[] hybridFilterResult = namespace.queryTable(hybridFilterQuery);
+      assertNotNull(hybridFilterResult, "Hybrid search with filter result should not be null");
+      System.out.println("✓ Hybrid search with filter completed successfully");
+
+      // Test 3: Hybrid search with column selection
+      System.out.println("\n--- Test 3: Hybrid search with specific columns ---");
+      QueryRequest hybridColumnsQuery = new QueryRequest();
+      hybridColumnsQuery.setName(tableName);
+
+      // Add vector search
+      List<Float> queryVector3 = new ArrayList<>();
+      for (int i = 0; i < 128; i++) {
+        queryVector3.add((float) Math.random());
+      }
+      hybridColumnsQuery.setVector(queryVector3);
+      hybridColumnsQuery.setK(8);
+
+      // Add full-text search with columns
+      StringFtsQuery ftsQuery3 = new StringFtsQuery();
+      ftsQuery3.setQuery("test");
+      ftsQuery3.setColumns(Arrays.asList("text")); // Search only in text column
+      hybridColumnsQuery.setFullTextQuery(ftsQuery3);
+
+      // Return specific columns
+      hybridColumnsQuery.setColumns(Arrays.asList("id", "text"));
+
+      byte[] hybridColumnsResult = namespace.queryTable(hybridColumnsQuery);
+      assertNotNull(hybridColumnsResult, "Hybrid search with columns result should not be null");
+      verifyQueryResultRowCount(hybridColumnsResult, 8, "Hybrid search with columns");
+
+      System.out.println("✓ All hybrid search tests completed successfully");
+
+    } finally {
+      dropTableHelper(tableName);
+    }
+  }
+
   private LanceRestNamespace initializeClient() {
     Map<String, String> config = new HashMap<>();
     config.put("headers.x-lancedb-database", DATABASE);
@@ -713,9 +1177,7 @@ public class RestTableApiTest {
       QueryRequest queryRequest = new QueryRequest();
       queryRequest.setName(updateTableName);
       queryRequest.setK(3);
-
-      List<String> columns = Arrays.asList("id");
-      queryRequest.setColumns(columns);
+      // Don't set columns or vector for simple queries
 
       byte[] queryResult;
       queryResult = namespace.queryTable(queryRequest);
@@ -912,7 +1374,7 @@ public class RestTableApiTest {
         QueryRequest queryRequest = new QueryRequest();
         queryRequest.setName(mergeTableName);
         queryRequest.setK(4);
-        queryRequest.setColumns(Arrays.asList("id", "name"));
+        // Don't set columns or vector for simple queries
 
         byte[] queryResult = namespace.queryTable(queryRequest);
         assertNotNull(queryResult, "Query result should not be null");

@@ -39,23 +39,32 @@ class TestQueryRequest(unittest.TestCase):
                 namespace = [
                     ''
                     ],
-                vector = [
-                    1.337
-                    ],
-                k = 1,
-                filter = '',
+                bypass_vector_index = True,
                 columns = [
                     ''
                     ],
-                distance_type = 'l2',
-                prefilter = True,
-                bypass_vector_index = True,
-                ef = 1,
-                nprobes = 1,
-                refine_factor = 1,
-                with_row_id = True,
+                distance_type = '',
+                ef = 0,
+                fast_search = True,
+                filter = '',
+                full_text_query = lance_namespace_urllib3_client.models.string_fts_query.StringFtsQuery(
+                    columns = [
+                        ''
+                        ], 
+                    query = '', ),
+                k = 0,
+                lower_bound = 1.337,
+                nprobes = 0,
                 offset = 0,
-                version = 0
+                prefilter = True,
+                refine_factor = 0,
+                upper_bound = 1.337,
+                vector = [
+                    1.337
+                    ],
+                vector_column = '',
+                version = 0,
+                with_row_id = True
             )
         else:
             return QueryRequest(
@@ -63,10 +72,10 @@ class TestQueryRequest(unittest.TestCase):
                 namespace = [
                     ''
                     ],
+                k = 0,
                 vector = [
                     1.337
                     ],
-                k = 1,
         )
         """
 
