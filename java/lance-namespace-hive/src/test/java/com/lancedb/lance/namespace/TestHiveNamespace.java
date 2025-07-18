@@ -60,7 +60,7 @@ public class TestHiveNamespace {
     metastore.start();
 
     File file =
-        createTempDirectory("TestHMSNamespace", asFileAttribute(fromString("rwxrwxrwx"))).toFile();
+        createTempDirectory("TestHiveNamespace", asFileAttribute(fromString("rwxrwxrwx"))).toFile();
     tmpDirBase = file.getAbsolutePath();
   }
 
@@ -97,15 +97,7 @@ public class TestHiveNamespace {
 
     // Case 1: list root.
     ListNamespacesRequest request = new ListNamespacesRequest();
-    request.setParent(Lists.list(""));
-    assertEquals(namespaces.keySet(), namespace.listNamespaces(request).getNamespaces());
-
     request.setParent(Lists.list());
-    assertEquals(namespaces.keySet(), namespace.listNamespaces(request).getNamespaces());
-
-    List<String> parent = Lists.list();
-    parent.add(null);
-    request.setParent(parent);
     assertEquals(namespaces.keySet(), namespace.listNamespaces(request).getNamespaces());
 
     // Case 2: list catalog.
@@ -118,7 +110,6 @@ public class TestHiveNamespace {
     // Case 3: list database.
     for (String catalog : namespaces.keySet()) {
       for (String db : namespaces.get(catalog).keySet()) {
-        Set<String> tables = namespaces.get(catalog).get(db);
         request.setParent(Lists.list(catalog, db));
         assertEquals(Sets.newHashSet(), namespace.listNamespaces(request).getNamespaces());
       }

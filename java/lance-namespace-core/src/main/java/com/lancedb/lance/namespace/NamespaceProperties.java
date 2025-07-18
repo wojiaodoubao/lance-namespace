@@ -11,9 +11,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lancedb.lance.namespace.conf;
+package com.lancedb.lance.namespace;
 
-public class ConfKeys {
-  public static final String HMS_CLIENT_POOL_SIZE = "lance.namespace.hms.client-pool-size";
-  public static final String HMS_CLIENT_POOL_SIZE_DEFAULT = "3";
+public class NamespaceProperties {
+  public static final String NS_IMPL = "lance.namespace.impl";
+  public static final String NS_IMPL_DEFAULT =
+      "com.lancedb.lance.namespace.hive.LanceHiveNamespace";
 }

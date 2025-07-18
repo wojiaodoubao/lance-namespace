@@ -13,9 +13,9 @@
     </parent>
 
 
-    <artifactId>lance-namespace-hms</artifactId>
+    <artifactId>lance-namespace-hive</artifactId>
     <name>${project.artifactId}</name>
-    <description>Lance Namespace HMS Impl</description>
+    <description>Lance Namespace Hive Impl</description>
     <packaging>jar</packaging>
 
     <dependencies>

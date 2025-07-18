@@ -11,10 +11,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lancedb.lance.namespace.conf;
+package com.lancedb.lance.namespace;
 
-public class CoreKeys {
-  public static final String CATALOG_IMPL = "lance.namespace.catalog-impl";
-  public static final String CATALOG_IMPL_DEFAULT =
-      "com.lancedb.lance.namespace.hive.LanceHiveNamespace";
+public class HiveNamespaceProperties {
+  public static final String HIVE_CLIENT_POOL_SIZE = "lance.namespace.hive.client-pool-size";
+  public static final String HIVE_CLIENT_POOL_SIZE_DEFAULT = "3";
 }

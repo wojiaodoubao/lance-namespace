@@ -13,7 +13,6 @@
  */
 package com.lancedb.lance.namespace;
 
-import com.lancedb.lance.namespace.conf.CoreKeys;
 import com.lancedb.lance.namespace.model.AlterTransactionRequest;
 import com.lancedb.lance.namespace.model.AlterTransactionResponse;
 import com.lancedb.lance.namespace.model.CountRowsRequest;
@@ -61,7 +60,8 @@ import java.util.Map;
 /** TODO: add documentation */
 public interface LanceNamespace {
   static LanceNamespace create(String name, Map<String, String> properties, Object conf) {
-    String impl = properties.getOrDefault(CoreKeys.CATALOG_IMPL, CoreKeys.CATALOG_IMPL_DEFAULT);
+    String impl =
+        properties.getOrDefault(NamespaceProperties.NS_IMPL, NamespaceProperties.NS_IMPL_DEFAULT);
 
     LanceNamespace ns;
     try {
@@ -82,10 +82,10 @@ public interface LanceNamespace {
   }
 
   /**
-   * Initialize catalog with custom name and conf properties.
+   * Initialize namespace with custom name and conf properties.
    *
-   * @param name a custom name for the catalog
-   * @param properties catalog conf properties
+   * @param name a custom name for the namespace
+   * @param properties namespace conf properties
    */
   default void initialize(String name, Map<String, String> properties) {}
 

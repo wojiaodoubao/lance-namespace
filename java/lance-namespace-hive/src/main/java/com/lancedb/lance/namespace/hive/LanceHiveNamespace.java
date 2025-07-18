@@ -57,7 +57,7 @@ import com.lancedb.lance.namespace.model.TableExistsRequest;
 import com.lancedb.lance.namespace.model.TableExistsResponse;
 import com.lancedb.lance.namespace.model.UpdateTableRequest;
 import com.lancedb.lance.namespace.model.UpdateTableResponse;
-import com.lancedb.lance.namespace.util.PageUtils;
+import com.lancedb.lance.namespace.util.PageUtil;
 import com.lancedb.lance.namespace.util.ValidationUtil;
 
 import com.google.common.collect.Lists;
@@ -71,8 +71,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.lancedb.lance.namespace.conf.ConfKeys.HMS_CLIENT_POOL_SIZE;
-import static com.lancedb.lance.namespace.conf.ConfKeys.HMS_CLIENT_POOL_SIZE_DEFAULT;
+import static com.lancedb.lance.namespace.HiveNamespaceProperties.HIVE_CLIENT_POOL_SIZE;
+import static com.lancedb.lance.namespace.HiveNamespaceProperties.HIVE_CLIENT_POOL_SIZE_DEFAULT;
 
 public class LanceHiveNamespace implements LanceNamespace, Configurable<Configuration> {
   private static final Logger LOG = LoggerFactory.getLogger(LanceHiveNamespace.class);
@@ -96,7 +96,7 @@ public class LanceHiveNamespace implements LanceNamespace, Configurable<Configur
 
     int poolSize =
         Integer.parseInt(
-            properties.getOrDefault(HMS_CLIENT_POOL_SIZE, HMS_CLIENT_POOL_SIZE_DEFAULT));
+            properties.getOrDefault(HIVE_CLIENT_POOL_SIZE, HIVE_CLIENT_POOL_SIZE_DEFAULT));
 
     this.clientPool = new HiveClientPool(poolSize, hadoopConf);
   }
@@ -116,9 +116,9 @@ public class LanceHiveNamespace implements LanceNamespace, Configurable<Configur
     }
 
     Collections.sort(nss);
-    PageUtils.Page page =
-        PageUtils.splitPage(
-            nss, request.getPageToken(), PageUtils.normalizePageSize(request.getPageSize()));
+    PageUtil.Page page =
+        PageUtil.splitPage(
+            nss, request.getPageToken(), PageUtil.normalizePageSize(request.getPageSize()));
 
     ListNamespacesResponse response = new ListNamespacesResponse();
     response.setNamespaces(Sets.newHashSet(page.items()));
@@ -139,6 +139,7 @@ public class LanceHiveNamespace implements LanceNamespace, Configurable<Configur
     } catch (TException e) {
       throw new RuntimeException(e);
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new RuntimeException(e);
     }
   }

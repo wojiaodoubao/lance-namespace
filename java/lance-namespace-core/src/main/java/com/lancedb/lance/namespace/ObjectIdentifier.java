@@ -13,11 +13,12 @@
  */
 package com.lancedb.lance.namespace;
 
+import com.lancedb.lance.namespace.util.ValidationUtil;
+
 import com.google.common.collect.ImmutableList;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ObjectIdentifier {
   private String[] levels;
@@ -27,11 +28,12 @@ public class ObjectIdentifier {
   }
 
   public static ObjectIdentifier of(List<String> levels) {
-    List<String> normalizedLevels =
-        levels.stream()
-            .filter(level -> level != null && !level.isEmpty())
-            .collect(Collectors.toList());
-    return new ObjectIdentifier(normalizedLevels.toArray(new String[0]));
+    levels.stream()
+        .forEach(
+            level ->
+                ValidationUtil.checkNotNullOrEmptyString(
+                    level, "Invalid namespace containing empty string %s", levels));
+    return new ObjectIdentifier(levels.toArray(new String[0]));
   }
 
   public String level(int pos) {

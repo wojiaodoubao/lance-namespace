@@ -19,25 +19,33 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class TestObjectIdentifier {
   @Test
   public void testObjectIdentifier() {
-    // Case 1: empty namespace
+    // Case 1: invalid namespace
+    List<String> ns = Lists.newArrayList();
+    ns.add(null);
+    assertThrows(IllegalArgumentException.class, () -> ObjectIdentifier.of(ns));
+
+    ns.clear();
+    ns.add("");
+    assertThrows(IllegalArgumentException.class, () -> ObjectIdentifier.of(ns));
+
+    assertThrows(
+        IllegalArgumentException.class, () -> ObjectIdentifier.of(Lists.newArrayList("a", "")));
+
+    // Case 2: empty namespace
     ObjectIdentifier oid = ObjectIdentifier.of(Lists.newArrayList());
     assertEquals(0, oid.size());
 
-    List<String> ns = Lists.newArrayList();
-    ns.add(null);
-    ns.add("");
-    assertEquals(0, oid.size());
-
-    oid = ObjectIdentifier.of(Lists.newArrayList("a", "", "b"));
+    oid = ObjectIdentifier.of(Lists.newArrayList("a", "b"));
     assertEquals(2, oid.size());
     assertEquals("a", oid.level(0));
     assertEquals("b", oid.level(1));
 
-    // Case 2: parse name
+    // Case 3: parse name
     oid = ObjectIdentifier.of(Lists.newArrayList());
     assertEquals("", oid.name());
 
@@ -47,7 +55,7 @@ public class TestObjectIdentifier {
     oid = ObjectIdentifier.of(Lists.newArrayList("a", "b"));
     assertEquals("b", oid.name());
 
-    // Case 3: parse parent
+    // Case 4: parse parent
     oid = ObjectIdentifier.of(Lists.newArrayList());
     assertEquals(Lists.newArrayList(), oid.parent());
 

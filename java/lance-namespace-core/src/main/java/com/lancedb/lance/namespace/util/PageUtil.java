@@ -15,8 +15,8 @@ package com.lancedb.lance.namespace.util;
 
 import java.util.List;
 
-public class PageUtils {
-  private PageUtils() {}
+public class PageUtil {
+  private PageUtil() {}
 
   public static class Page {
     private List<String> items;
