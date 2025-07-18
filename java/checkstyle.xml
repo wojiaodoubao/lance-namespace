@@ -172,10 +172,15 @@
             <property name="illegalPkgs" value="org.apache.log4j" />
             <property name="illegalPkgs" value="org.apache.commons.lang" />
         </module>
-        <!-- support structured logging -->
-        <module name="RegexpSinglelineJava">
-            <property name="format" value="org\.slf4j\.(Logger|LoggerFactory)" />
-            <property name="message" value="Please use org.apache.spark.internal.(SparkLogger|SparkLoggerFactory) instead." />
+        <module name="IllegalImport">
+            <property name="illegalPkgs" value="org.apache.hadoop.hbase.shaded" />
+            <message key="import.illegal"
+                     value="Do not use HBase shaded classes."/>
+        </module>
+        <module name="IllegalImport">
+            <property name="illegalPkgs" value="org.apache.parquet" />
+            <message key="import.illegal"
+                     value="Do not use Parquet classes directly."/>
         </module>
     </module>
 </module>
