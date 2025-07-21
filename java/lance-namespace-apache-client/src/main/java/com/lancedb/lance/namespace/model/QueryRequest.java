@@ -85,7 +85,7 @@ public class QueryRequest {
   @javax.annotation.Nullable private JsonNullable<String> filter = JsonNullable.<String>undefined();
 
   public static final String JSON_PROPERTY_FULL_TEXT_QUERY = "full_text_query";
-  @javax.annotation.Nullable private StringFtsQuery fullTextQuery;
+  @javax.annotation.Nullable private QueryRequestFullTextQuery fullTextQuery;
 
   public static final String JSON_PROPERTY_K = "k";
   @javax.annotation.Nonnull private Integer k;
@@ -121,7 +121,7 @@ public class QueryRequest {
   private JsonNullable<Float> upperBound = JsonNullable.<Float>undefined();
 
   public static final String JSON_PROPERTY_VECTOR = "vector";
-  @javax.annotation.Nonnull private List<Float> vector = new ArrayList<>();
+  @javax.annotation.Nonnull private QueryRequestVector vector;
 
   public static final String JSON_PROPERTY_VECTOR_COLUMN = "vector_column";
 
@@ -386,27 +386,28 @@ public class QueryRequest {
     this.filter = JsonNullable.<String>of(filter);
   }
 
-  public QueryRequest fullTextQuery(@javax.annotation.Nullable StringFtsQuery fullTextQuery) {
+  public QueryRequest fullTextQuery(
+      @javax.annotation.Nullable QueryRequestFullTextQuery fullTextQuery) {
 
     this.fullTextQuery = fullTextQuery;
     return this;
   }
 
   /**
-   * Optional full-text search query (only string query supported)
+   * Get fullTextQuery
    *
    * @return fullTextQuery
    */
   @javax.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FULL_TEXT_QUERY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public StringFtsQuery getFullTextQuery() {
+  public QueryRequestFullTextQuery getFullTextQuery() {
     return fullTextQuery;
   }
 
   @JsonProperty(JSON_PROPERTY_FULL_TEXT_QUERY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFullTextQuery(@javax.annotation.Nullable StringFtsQuery fullTextQuery) {
+  public void setFullTextQuery(@javax.annotation.Nullable QueryRequestFullTextQuery fullTextQuery) {
     this.fullTextQuery = fullTextQuery;
   }
 
@@ -626,35 +627,27 @@ public class QueryRequest {
     this.upperBound = JsonNullable.<Float>of(upperBound);
   }
 
-  public QueryRequest vector(@javax.annotation.Nonnull List<Float> vector) {
+  public QueryRequest vector(@javax.annotation.Nonnull QueryRequestVector vector) {
 
     this.vector = vector;
     return this;
   }
 
-  public QueryRequest addVectorItem(Float vectorItem) {
-    if (this.vector == null) {
-      this.vector = new ArrayList<>();
-    }
-    this.vector.add(vectorItem);
-    return this;
-  }
-
   /**
-   * Query vector for similarity search (single vector only)
+   * Get vector
    *
    * @return vector
    */
   @javax.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_VECTOR)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public List<Float> getVector() {
+  public QueryRequestVector getVector() {
     return vector;
   }
 
   @JsonProperty(JSON_PROPERTY_VECTOR)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setVector(@javax.annotation.Nonnull List<Float> vector) {
+  public void setVector(@javax.annotation.Nonnull QueryRequestVector vector) {
     this.vector = vector;
   }
 
@@ -1147,23 +1140,7 @@ public class QueryRequest {
 
     // add `vector` to the URL query string
     if (getVector() != null) {
-      for (int i = 0; i < getVector().size(); i++) {
-        try {
-          joiner.add(
-              String.format(
-                  "%svector%s%s=%s",
-                  prefix,
-                  suffix,
-                  "".equals(suffix)
-                      ? ""
-                      : String.format("%s%d%s", containerPrefix, i, containerSuffix),
-                  URLEncoder.encode(String.valueOf(getVector().get(i)), "UTF-8")
-                      .replaceAll("\\+", "%20")));
-        } catch (UnsupportedEncodingException e) {
-          // Should never happen, UTF-8 is always supported
-          throw new RuntimeException(e);
-        }
-      }
+      joiner.add(getVector().toUrlQueryString(prefix + "vector" + suffix));
     }
 
     // add `vector_column` to the URL query string

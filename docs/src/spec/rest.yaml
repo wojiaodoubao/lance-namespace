@@ -1510,6 +1510,7 @@ components:
           description: Whether to bypass vector index
         columns:
           type: array
+          nullable: true
           items:
             type: string
           description: Optional list of columns to return
@@ -1535,8 +1536,14 @@ components:
           - 'null'
           description: Optional SQL filter expression
         full_text_query:
-          $ref: '#/components/schemas/StringFtsQuery'
-          description: Optional full-text search query (only string query supported)
+          type: object
+          nullable: true
+          description: Optional full-text search query. Provide either string_query or structured_query, not both.
+          properties:
+            string_query:
+              $ref: '#/components/schemas/StringFtsQuery'
+            structured_query:
+              $ref: '#/components/schemas/StructuredFtsQuery'
         k:
           type: integer
           minimum: 0
@@ -1578,11 +1585,24 @@ components:
           format: float
           description: Upper bound for search
         vector:
-          type: array
-          items:
-            type: number
-            format: float
-          description: Query vector for similarity search (single vector only)
+          type: object
+          nullable: true
+          description: Query vector(s) for similarity search. Provide either single_vector or multi_vector, not both.
+          properties:
+            single_vector:
+              type: array
+              items:
+                type: number
+                format: float
+              description: Single query vector
+            multi_vector:
+              type: array
+              items:
+                type: array
+                items:
+                  type: number
+                  format: float
+              description: Multiple query vectors for batch search
         vector_column:
           type:
           - string
@@ -1627,29 +1647,42 @@ components:
         metric_type:
           type: string
           enum: ["l2", "cosine", "dot"]
+          nullable: true
           description: Distance metric type for vector indexes
-        num_partitions:
+        with_position:
+          type: boolean
+          nullable: true
+          description: Optional FTS parameter for position tracking
+        base_tokenizer:
+          type: string
+          nullable: true
+          description: Optional FTS parameter for base tokenizer
+        language:
+          type: string
+          nullable: true
+          description: Optional FTS parameter for language
+        max_token_length:
           type: integer
-          minimum: 1
-          description: Number of partitions for IVF indexes
-        num_sub_vectors:
-          type: integer
-          minimum: 1
-          description: Number of sub-vectors for PQ indexes
-        num_bits:
-          type: integer
-          minimum: 1
-          maximum: 8
-          description: Number of bits for scalar quantization
-        max_iterations:
-          type: integer
-          minimum: 1
-          description: Maximum iterations for index building
-        sample_rate:
-          type: integer
-          minimum: 1
-          description: Sample rate for index building
-
+          nullable: true
+          minimum: 0
+          description: Optional FTS parameter for maximum token length
+        lower_case:
+          type: boolean
+          nullable: true
+          description: Optional FTS parameter for lowercase conversion
+        stem:
+          type: boolean
+          nullable: true
+          description: Optional FTS parameter for stemming
+        remove_stop_words:
+          type: boolean
+          nullable: true
+          description: Optional FTS parameter for stop word removal
+        ascii_folding:
+          type: boolean
+          nullable: true
+          description: Optional FTS parameter for ASCII folding
+        
     CreateIndexResponse:
       type: object
       required:
@@ -2115,42 +2148,28 @@ components:
           $ref: '#/components/schemas/FtsQuery'
 
     FtsQuery:
-      oneOf:
-      - type: object
-        required:
-        - match
-        properties:
-          match:
-            $ref: '#/components/schemas/MatchQuery'
-      - type: object
-        required:
-        - phrase
-        properties:
-          phrase:
-            $ref: '#/components/schemas/PhraseQuery'
-      - type: object
-        required:
-        - boost
-        properties:
-          boost:
-            $ref: '#/components/schemas/BoostQuery'
-      - type: object
-        required:
-        - multi_match
-        properties:
-          multi_match:
-            $ref: '#/components/schemas/MultiMatchQuery'
-      - type: object
-        required:
-        - boolean
-        properties:
-          boolean:
-            $ref: '#/components/schemas/BooleanQuery'
+      type: object
+      description: |
+        Full-text search query. Exactly one query type field must be provided.
+        This structure follows the same pattern as AlterTransactionAction to minimize
+        differences and compatibility issues across codegen in different languages.
+      properties:
+        match:
+          $ref: '#/components/schemas/MatchQuery'
+        phrase:
+          $ref: '#/components/schemas/PhraseQuery'
+        boost:
+          $ref: '#/components/schemas/BoostQuery'
+        multi_match:
+          $ref: '#/components/schemas/MultiMatchQuery'
+        boolean:
+          $ref: '#/components/schemas/BooleanQuery'
 
     MatchQuery:
       type: object
       required:
       - terms
+      - column
       properties:
         boost:
           type: number
@@ -2206,17 +2225,20 @@ components:
 
     BoostQuery:
       type: object
+      description: Boost query that scores documents matching positive query higher and negative query lower
       required:
       - positive
       - negative
       properties:
+        positive:
+          $ref: '#/components/schemas/FtsQuery'
         negative:
-          type: object
+          $ref: '#/components/schemas/FtsQuery'
         negative_boost:
           type: number
           format: float
-        positive:
-          type: object
+          description: 'Boost factor for negative query (default: 0.5)'
+          default: 0.5
 
     MultiMatchQuery:
       type: object

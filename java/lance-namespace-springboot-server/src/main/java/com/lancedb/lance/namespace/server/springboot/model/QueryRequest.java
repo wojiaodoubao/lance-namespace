@@ -47,7 +47,7 @@ public class QueryRequest {
 
   private String filter = null;
 
-  private StringFtsQuery fullTextQuery;
+  private QueryRequestFullTextQuery fullTextQuery;
 
   private Integer k;
 
@@ -63,7 +63,7 @@ public class QueryRequest {
 
   private Float upperBound = null;
 
-  @Valid private List<Float> vector = new ArrayList<>();
+  private QueryRequestVector vector;
 
   private String vectorColumn = null;
 
@@ -76,7 +76,7 @@ public class QueryRequest {
   }
 
   /** Constructor with only required parameters */
-  public QueryRequest(String name, List<String> namespace, Integer k, List<Float> vector) {
+  public QueryRequest(String name, List<String> namespace, Integer k, QueryRequestVector vector) {
     this.name = name;
     this.namespace = namespace;
     this.k = k;
@@ -280,27 +280,24 @@ public class QueryRequest {
     this.filter = filter;
   }
 
-  public QueryRequest fullTextQuery(StringFtsQuery fullTextQuery) {
+  public QueryRequest fullTextQuery(QueryRequestFullTextQuery fullTextQuery) {
     this.fullTextQuery = fullTextQuery;
     return this;
   }
 
   /**
-   * Optional full-text search query (only string query supported)
+   * Get fullTextQuery
    *
    * @return fullTextQuery
    */
   @Valid
-  @Schema(
-      name = "full_text_query",
-      description = "Optional full-text search query (only string query supported)",
-      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @Schema(name = "full_text_query", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("full_text_query")
-  public StringFtsQuery getFullTextQuery() {
+  public QueryRequestFullTextQuery getFullTextQuery() {
     return fullTextQuery;
   }
 
-  public void setFullTextQuery(StringFtsQuery fullTextQuery) {
+  public void setFullTextQuery(QueryRequestFullTextQuery fullTextQuery) {
     this.fullTextQuery = fullTextQuery;
   }
 
@@ -470,35 +467,25 @@ public class QueryRequest {
     this.upperBound = upperBound;
   }
 
-  public QueryRequest vector(List<Float> vector) {
+  public QueryRequest vector(QueryRequestVector vector) {
     this.vector = vector;
     return this;
   }
 
-  public QueryRequest addVectorItem(Float vectorItem) {
-    if (this.vector == null) {
-      this.vector = new ArrayList<>();
-    }
-    this.vector.add(vectorItem);
-    return this;
-  }
-
   /**
-   * Query vector for similarity search (single vector only)
+   * Get vector
    *
    * @return vector
    */
   @NotNull
-  @Schema(
-      name = "vector",
-      description = "Query vector for similarity search (single vector only)",
-      requiredMode = Schema.RequiredMode.REQUIRED)
+  @Valid
+  @Schema(name = "vector", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("vector")
-  public List<Float> getVector() {
+  public QueryRequestVector getVector() {
     return vector;
   }
 
-  public void setVector(List<Float> vector) {
+  public void setVector(QueryRequestVector vector) {
     this.vector = vector;
   }
 

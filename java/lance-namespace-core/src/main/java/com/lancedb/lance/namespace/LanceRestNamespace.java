@@ -18,6 +18,7 @@ import com.lancedb.lance.namespace.client.apache.ApiException;
 import com.lancedb.lance.namespace.client.apache.api.NamespaceApi;
 import com.lancedb.lance.namespace.client.apache.api.TableApi;
 import com.lancedb.lance.namespace.client.apache.api.TransactionApi;
+import com.lancedb.lance.namespace.jackson.LanceNamespaceJacksonModule;
 import com.lancedb.lance.namespace.model.AlterTransactionRequest;
 import com.lancedb.lance.namespace.model.AlterTransactionResponse;
 import com.lancedb.lance.namespace.model.CountRowsRequest;
@@ -59,6 +60,8 @@ import com.lancedb.lance.namespace.model.TableExistsResponse;
 import com.lancedb.lance.namespace.model.UpdateTableRequest;
 import com.lancedb.lance.namespace.model.UpdateTableResponse;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.Map;
 
 public class LanceRestNamespace implements LanceNamespace {
@@ -69,10 +72,25 @@ public class LanceRestNamespace implements LanceNamespace {
   private final RestConfig config;
 
   public LanceRestNamespace(ApiClient client, Map<String, String> config) {
+    // Register custom serializers before creating API instances
+    ObjectMapper objectMapper = client.getObjectMapper();
+    objectMapper.registerModule(new LanceNamespaceJacksonModule());
+    client.setObjectMapper(objectMapper);
+
     this.namespaceApi = new NamespaceApi(client);
     this.tableApi = new TableApi(client);
     this.transactionApi = new TransactionApi(client);
     this.config = new RestConfig(config);
+  }
+
+  /**
+   * Create a new builder for constructing LanceRestNamespace instances. This is the recommended way
+   * to create a LanceRestNamespace.
+   *
+   * @return A new LanceRestNamespaceBuilder
+   */
+  public static LanceRestNamespaceBuilder builder() {
+    return LanceRestNamespaceBuilder.builder();
   }
 
   @Override

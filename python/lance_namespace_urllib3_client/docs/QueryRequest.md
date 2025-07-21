@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 **ef** | **int** | Search effort parameter for HNSW index | [optional] 
 **fast_search** | **bool** | Whether to use fast search | [optional] 
 **filter** | **str** | Optional SQL filter expression | [optional] 
-**full_text_query** | [**StringFtsQuery**](StringFtsQuery.md) | Optional full-text search query (only string query supported) | [optional] 
+**full_text_query** | [**QueryRequestFullTextQuery**](QueryRequestFullTextQuery.md) |  | [optional] 
 **k** | **int** | Number of results to return | 
 **lower_bound** | **float** | Lower bound for search | [optional] 
 **nprobes** | **int** | Number of probes for IVF index | [optional] 
@@ -21,7 +21,7 @@ Name | Type | Description | Notes
 **prefilter** | **bool** | Whether to apply filtering before vector search | [optional] 
 **refine_factor** | **int** | Refine factor for search | [optional] 
 **upper_bound** | **float** | Upper bound for search | [optional] 
-**vector** | **List[float]** | Query vector for similarity search (single vector only) | 
+**vector** | [**QueryRequestVector**](QueryRequestVector.md) |  | 
 **vector_column** | **str** | Name of the vector column to search | [optional] 
 **version** | **int** | Table version to query | [optional] 
 **with_row_id** | **bool** | If true, return the row id as a column called &#x60;_rowid&#x60; | [optional] 

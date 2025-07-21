@@ -47,11 +47,63 @@ class TestQueryRequest(unittest.TestCase):
                 ef = 0,
                 fast_search = True,
                 filter = '',
-                full_text_query = lance_namespace_urllib3_client.models.string_fts_query.StringFtsQuery(
-                    columns = [
-                        ''
-                        ], 
-                    query = '', ),
+                full_text_query = lance_namespace_urllib3_client.models.query_request_full_text_query.QueryRequest_full_text_query(
+                    string_query = lance_namespace_urllib3_client.models.string_fts_query.StringFtsQuery(
+                        columns = [
+                            ''
+                            ], 
+                        query = '', ), 
+                    structured_query = lance_namespace_urllib3_client.models.structured_fts_query.StructuredFtsQuery(
+                        query = lance_namespace_urllib3_client.models.fts_query.FtsQuery(
+                            match = lance_namespace_urllib3_client.models.match_query.MatchQuery(
+                                boost = 1.337, 
+                                column = '', 
+                                fuzziness = 0, 
+                                max_expansions = 0, 
+                                operator = 'And', 
+                                prefix_length = 0, 
+                                terms = '', ), 
+                            phrase = lance_namespace_urllib3_client.models.phrase_query.PhraseQuery(
+                                column = '', 
+                                slop = 0, 
+                                terms = '', ), 
+                            boost = lance_namespace_urllib3_client.models.boost_query.BoostQuery(
+                                positive = lance_namespace_urllib3_client.models.fts_query.FtsQuery(
+                                    multi_match = lance_namespace_urllib3_client.models.multi_match_query.MultiMatchQuery(
+                                        match_queries = [
+                                            lance_namespace_urllib3_client.models.match_query.MatchQuery(
+                                                column = '', 
+                                                fuzziness = 0, 
+                                                max_expansions = 0, 
+                                                prefix_length = 0, 
+                                                terms = '', )
+                                            ], ), 
+                                    boolean = lance_namespace_urllib3_client.models.boolean_query.BooleanQuery(
+                                        must = [
+                                            
+                                            ], 
+                                        must_not = [
+                                            
+                                            ], 
+                                        should = [
+                                            
+                                            ], ), ), 
+                                negative = , 
+                                negative_boost = 1.337, ), 
+                            multi_match = lance_namespace_urllib3_client.models.multi_match_query.MultiMatchQuery(
+                                match_queries = [
+                                    
+                                    ], ), 
+                            boolean = lance_namespace_urllib3_client.models.boolean_query.BooleanQuery(
+                                must = [
+                                    
+                                    ], 
+                                must_not = [
+                                    
+                                    ], 
+                                should = [
+                                    
+                                    ], ), ), ), ),
                 k = 0,
                 lower_bound = 1.337,
                 nprobes = 0,
@@ -59,9 +111,15 @@ class TestQueryRequest(unittest.TestCase):
                 prefilter = True,
                 refine_factor = 0,
                 upper_bound = 1.337,
-                vector = [
-                    1.337
-                    ],
+                vector = lance_namespace_urllib3_client.models.query_request_vector.QueryRequest_vector(
+                    single_vector = [
+                        1.337
+                        ], 
+                    multi_vector = [
+                        [
+                            1.337
+                            ]
+                        ], ),
                 vector_column = '',
                 version = 0,
                 with_row_id = True
@@ -73,9 +131,15 @@ class TestQueryRequest(unittest.TestCase):
                     ''
                     ],
                 k = 0,
-                vector = [
-                    1.337
-                    ],
+                vector = lance_namespace_urllib3_client.models.query_request_vector.QueryRequest_vector(
+                    single_vector = [
+                        1.337
+                        ], 
+                    multi_vector = [
+                        [
+                            1.337
+                            ]
+                        ], ),
         )
         """
 

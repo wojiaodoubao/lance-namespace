@@ -35,9 +35,8 @@ pub struct QueryRequest {
     /// Optional SQL filter expression
     #[serde(rename = "filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub filter: Option<Option<String>>,
-    /// Optional full-text search query (only string query supported)
     #[serde(rename = "full_text_query", skip_serializing_if = "Option::is_none")]
-    pub full_text_query: Option<Box<models::StringFtsQuery>>,
+    pub full_text_query: Option<Box<models::QueryRequestFullTextQuery>>,
     /// Number of results to return
     #[serde(rename = "k")]
     pub k: i32,
@@ -59,9 +58,8 @@ pub struct QueryRequest {
     /// Upper bound for search
     #[serde(rename = "upper_bound", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub upper_bound: Option<Option<f32>>,
-    /// Query vector for similarity search (single vector only)
     #[serde(rename = "vector")]
-    pub vector: Vec<f32>,
+    pub vector: Box<models::QueryRequestVector>,
     /// Name of the vector column to search
     #[serde(rename = "vector_column", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub vector_column: Option<Option<String>>,
@@ -74,7 +72,7 @@ pub struct QueryRequest {
 }
 
 impl QueryRequest {
-    pub fn new(name: String, namespace: Vec<String>, k: i32, vector: Vec<f32>) -> QueryRequest {
+    pub fn new(name: String, namespace: Vec<String>, k: i32, vector: models::QueryRequestVector) -> QueryRequest {
         QueryRequest {
             name,
             namespace,
@@ -92,7 +90,7 @@ impl QueryRequest {
             prefilter: None,
             refine_factor: None,
             upper_bound: None,
-            vector,
+            vector: Box::new(vector),
             vector_column: None,
             version: None,
             with_row_id: None,
