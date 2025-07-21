@@ -21,6 +21,7 @@ import com.lancedb.lance.namespace.server.springboot.model.DescribeTableResponse
 import com.lancedb.lance.namespace.server.springboot.model.DescribeTransactionResponse;
 import com.lancedb.lance.namespace.server.springboot.model.DropNamespaceResponse;
 import com.lancedb.lance.namespace.server.springboot.model.DropTableResponse;
+import com.lancedb.lance.namespace.server.springboot.model.ErrorResponse;
 import com.lancedb.lance.namespace.server.springboot.model.JsonDataType;
 import com.lancedb.lance.namespace.server.springboot.model.JsonField;
 import com.lancedb.lance.namespace.server.springboot.model.JsonSchema;
@@ -154,6 +155,17 @@ public class ClientToServerResponse {
     converted.setNamespace(response.getNamespace());
     converted.setLocation(response.getLocation());
     converted.setProperties(response.getProperties());
+    return converted;
+  }
+
+  public static ErrorResponse errorResponse(
+      com.lancedb.lance.namespace.model.ErrorResponse errorResponse) {
+    ErrorResponse converted = new ErrorResponse();
+    converted.setType(errorResponse.getType());
+    converted.setTitle(errorResponse.getTitle());
+    converted.setDetail(errorResponse.getDetail());
+    converted.setStatus(errorResponse.getStatus());
+    converted.setInstance(errorResponse.getInstance());
     return converted;
   }
 
