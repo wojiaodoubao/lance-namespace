@@ -15,112 +15,159 @@ package com.lancedb.lance.namespace;
 
 import com.lancedb.lance.namespace.client.apache.ApiException;
 import com.lancedb.lance.namespace.model.ErrorResponse;
+import com.lancedb.lance.namespace.util.JsonUtil;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 public class LanceNamespaceException extends RuntimeException {
+  private static final Logger LOG = LoggerFactory.getLogger(LanceNamespaceException.class);
 
-  private final ErrorResponse errorResponse;
+  private final int code;
+  private final String responseBody;
+  private final Optional<ErrorResponse> errorResponse;
+
+  public LanceNamespaceException(int code, String responseBody) {
+    this.code = code;
+    this.responseBody = responseBody;
+    this.errorResponse = Optional.empty();
+  }
 
   public LanceNamespaceException(ApiException e) {
-    // TODO: properly parse into ErrorResponse model
     super(e.getResponseBody(), e);
 
-    this.errorResponse = new ErrorResponse();
-    errorResponse.setStatus(e.getCode());
-    errorResponse.type("/errors/api-exception");
-    errorResponse.setTitle("Api Exception");
-    errorResponse.setInstance("/v1/namespaces");
-    errorResponse.setDetail(e.getResponseBody());
+    ErrorResponse eResp = parse(e);
+    if (eResp != null) {
+      this.code = 0;
+      this.responseBody = null;
+      this.errorResponse = Optional.of(eResp);
+    } else {
+      this.code = e.getCode();
+      this.responseBody = e.getResponseBody();
+      this.errorResponse = Optional.empty();
+    }
   }
 
   public LanceNamespaceException(ErrorResponse errorResponse) {
-    this.errorResponse = errorResponse;
+    super(errorResponse.getType());
+
+    this.code = 0;
+    this.responseBody = null;
+    this.errorResponse = Optional.of(errorResponse);
+  }
+
+  private static ErrorResponse parse(ApiException e) {
+    if (e.getResponseBody() != null) {
+      try {
+        return JsonUtil.mapper().readValue(e.getResponseBody(), ErrorResponse.class);
+      } catch (JsonProcessingException ex) {
+        LOG.warn("Response body in wrong format. body={}", e.getResponseBody(), ex);
+      }
+    }
+
+    return null;
   }
 
   public int getCode() {
-    return errorResponse.getStatus();
+    return errorResponse.isPresent() ? errorResponse.get().getStatus() : code;
   }
 
-  public ErrorResponse getErrorResponse() {
+  public String getResponseBody() {
+    return responseBody;
+  }
+
+  public Optional<ErrorResponse> getErrorResponse() {
     return errorResponse;
   }
 
-  public static LanceNamespaceException badRequest(String detail) {
+  public static LanceNamespaceException badRequest(
+      String type, String title, String instance, String detail) {
     ErrorResponse errorResponse = new ErrorResponse();
-    errorResponse.type("/errors/bad-request");
-    errorResponse.setTitle("Malformed request");
+    errorResponse.type(type);
+    errorResponse.setTitle(title);
     errorResponse.setStatus(400);
     errorResponse.setDetail(detail);
-    errorResponse.setInstance("/v1/namespaces");
+    errorResponse.setInstance(instance);
     return new LanceNamespaceException(errorResponse);
   }
 
-  public static LanceNamespaceException unauthorized(String detail) {
+  public static LanceNamespaceException unauthorized(
+      String type, String title, String instance, String detail) {
     ErrorResponse errorResponse = new ErrorResponse();
-    errorResponse.type("/errors/unauthorized-request");
-    errorResponse.setTitle("No valid authentication credentials for the operation");
+    errorResponse.type(type);
+    errorResponse.setTitle(title);
     errorResponse.setStatus(401);
     errorResponse.setDetail(detail);
-    errorResponse.setInstance("/v1/namespaces");
+    errorResponse.setInstance(instance);
     return new LanceNamespaceException(errorResponse);
   }
 
-  public static LanceNamespaceException forbidden(String detail) {
+  public static LanceNamespaceException forbidden(
+      String type, String title, String instance, String detail) {
     ErrorResponse errorResponse = new ErrorResponse();
-    errorResponse.type("/errors/forbidden-request");
-    errorResponse.setTitle("Not authorized to make this request");
+    errorResponse.type(type);
+    errorResponse.setTitle(title);
     errorResponse.setStatus(403);
     errorResponse.setDetail(detail);
-    errorResponse.setInstance("/v1/namespaces");
+    errorResponse.setInstance(instance);
     return new LanceNamespaceException(errorResponse);
   }
 
-  public static LanceNamespaceException notFound(String detail) {
+  public static LanceNamespaceException notFound(
+      String type, String title, String instance, String detail) {
     ErrorResponse errorResponse = new ErrorResponse();
-    errorResponse.type("/errors/not-found-error");
-    errorResponse.setTitle("Not found Error");
+    errorResponse.type(type);
+    errorResponse.setTitle(title);
     errorResponse.setStatus(404);
     errorResponse.setDetail(detail);
-    errorResponse.setInstance("/v1/namespaces");
+    errorResponse.setInstance(instance);
     return new LanceNamespaceException(errorResponse);
   }
 
-  public static LanceNamespaceException unsupportedOperation(String detail) {
+  public static LanceNamespaceException unsupportedOperation(
+      String type, String title, String instance, String detail) {
     ErrorResponse errorResponse = new ErrorResponse();
-    errorResponse.type("/errors/unsupported-operation");
-    errorResponse.setTitle("The server does not support this operation");
+    errorResponse.type(type);
+    errorResponse.setTitle(title);
     errorResponse.setStatus(406);
     errorResponse.setDetail(detail);
-    errorResponse.setInstance("/v1/namespaces");
+    errorResponse.setInstance(instance);
     return new LanceNamespaceException(errorResponse);
   }
 
-  public static LanceNamespaceException conflict(String ns, String detail) {
+  public static LanceNamespaceException conflict(
+      String type, String title, String instance, String detail) {
     ErrorResponse errorResponse = new ErrorResponse();
-    errorResponse.type("/errors/conflict");
-    errorResponse.setTitle("The namespace has been concurrently modified");
+    errorResponse.type(type);
+    errorResponse.setTitle(title);
     errorResponse.setStatus(409);
     errorResponse.setDetail(detail);
-    errorResponse.setInstance(String.format("/v1/namespaces/%s", ns));
+    errorResponse.setInstance(instance);
     return new LanceNamespaceException(errorResponse);
   }
 
-  public static LanceNamespaceException serviceUnavailable(String detail) {
+  public static LanceNamespaceException serviceUnavailable(
+      String type, String title, String instance, String detail) {
     ErrorResponse errorResponse = new ErrorResponse();
-    errorResponse.type("/errors/service-unavailable");
-    errorResponse.setTitle("Slow down");
+    errorResponse.type(type);
+    errorResponse.setTitle(title);
     errorResponse.setStatus(504);
     errorResponse.setDetail(detail);
-    errorResponse.setInstance("/v1/namespaces");
+    errorResponse.setInstance(instance);
     return new LanceNamespaceException(errorResponse);
   }
 
-  public static LanceNamespaceException serverError(String detail) {
+  public static LanceNamespaceException serverError(
+      String type, String title, String instance, String detail) {
     ErrorResponse errorResponse = new ErrorResponse();
-    errorResponse.type("/errors/server-error");
-    errorResponse.setTitle("Internal Server Error");
+    errorResponse.type(type);
+    errorResponse.setTitle(title);
     errorResponse.setStatus(500);
     errorResponse.setDetail(detail);
-    errorResponse.setInstance("/v1/namespaces");
+    errorResponse.setInstance(instance);
     return new LanceNamespaceException(errorResponse);
   }
 }

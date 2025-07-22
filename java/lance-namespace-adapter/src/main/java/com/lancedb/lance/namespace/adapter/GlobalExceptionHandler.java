@@ -20,12 +20,27 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.util.Optional;
+
 @ControllerAdvice
 public class GlobalExceptionHandler {
   @ExceptionHandler(LanceNamespaceException.class)
   public ResponseEntity<ErrorResponse> handleLanceNamespaceException(LanceNamespaceException ex) {
-    com.lancedb.lance.namespace.model.ErrorResponse errorResponse = ex.getErrorResponse();
-    return ResponseEntity.status(errorResponse.getStatus())
-        .body(ClientToServerResponse.errorResponse(errorResponse));
+    Optional<com.lancedb.lance.namespace.model.ErrorResponse> errorResponse = ex.getErrorResponse();
+
+    if (errorResponse.isPresent()) {
+      return ResponseEntity.status(errorResponse.get().getStatus())
+          .body(ClientToServerResponse.errorResponse(errorResponse.get()));
+    } else {
+      // Transform error info into ErrorResponse
+      com.lancedb.lance.namespace.model.ErrorResponse errResp =
+          new com.lancedb.lance.namespace.model.ErrorResponse();
+      errResp.setStatus(500);
+      errResp.type("Internal Server Error");
+      errResp.setTitle(String.format("Lance Namespace Error Status: %d", ex.getCode()));
+      errResp.setDetail(ex.getResponseBody());
+
+      return ResponseEntity.status(500).body(ClientToServerResponse.errorResponse(errResp));
+    }
   }
 }

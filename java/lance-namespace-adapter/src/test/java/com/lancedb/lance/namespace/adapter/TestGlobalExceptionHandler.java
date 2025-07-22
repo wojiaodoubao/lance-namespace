@@ -36,9 +36,21 @@ public class TestGlobalExceptionHandler {
     mockMvc
         .perform(get("/testNotFound").queryParam("param", "foo"))
         .andExpect(status().is(404))
-        .andExpect(jsonPath("$.type").value("/errors/not-found-error"))
+        .andExpect(jsonPath("$.type").value("Mock resource not found"))
         .andExpect(jsonPath("$.title").value("Not found Error"))
         .andExpect(jsonPath("$.instance").value("/v1/namespaces"))
+        .andExpect(jsonPath("$.detail").value("foo not found"));
+  }
+
+  @Test
+  public void testInternalError() throws Exception {
+    mockMvc
+        .perform(
+            get("/testInternalError").queryParam("param", "foo").queryParam("errorCode", "101"))
+        .andExpect(status().is(500))
+        .andExpect(jsonPath("$.type").value("Internal Server Error"))
+        .andExpect(
+            jsonPath("$.title").value(String.format("Lance Namespace Error Status: %d", 101)))
         .andExpect(jsonPath("$.detail").value("foo not found"));
   }
 }
