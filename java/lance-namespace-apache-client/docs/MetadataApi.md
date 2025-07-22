@@ -5,22 +5,18 @@ All URIs are relative to *http://localhost:2333*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**alterTransaction**](MetadataApi.md#alterTransaction) | **POST** /v1/transaction/{id}/alter | Alter information of a transaction. |
-| [**countTableRows**](MetadataApi.md#countTableRows) | **POST** /v1/table/{id}/count_rows | Count rows in a table |
 | [**createNamespace**](MetadataApi.md#createNamespace) | **POST** /v1/namespace/{id}/create | Create a new namespace |
-| [**createTable**](MetadataApi.md#createTable) | **POST** /v1/table/{id}/create | Create a table with the given name |
 | [**createTableIndex**](MetadataApi.md#createTableIndex) | **POST** /v1/table/{id}/create_index | Create an index on a table |
-| [**createTableScalarIndex**](MetadataApi.md#createTableScalarIndex) | **POST** /v1/table/{id}/create_scalar_index | Create a scalar index on a table |
 | [**deregisterTable**](MetadataApi.md#deregisterTable) | **POST** /v1/table/{id}/deregister | Deregister a table from its namespace |
 | [**describeNamespace**](MetadataApi.md#describeNamespace) | **POST** /v1/namespace/{id}/describe | Describe information about a namespace |
 | [**describeTable**](MetadataApi.md#describeTable) | **POST** /v1/table/{id}/describe | Describe a table from the namespace |
-| [**describeTableIndexStats**](MetadataApi.md#describeTableIndexStats) | **POST** /v1/table/{id}/index/{index_name}/stats | Get index statistics |
-| [**describeTableV2**](MetadataApi.md#describeTableV2) | **POST** /v2/table/{id}/describe | Describe a table from the namespace |
+| [**describeTableIndexStats**](MetadataApi.md#describeTableIndexStats) | **POST** /v1/table/{id}/index/{index_name}/stats | Get table index statistics |
 | [**describeTransaction**](MetadataApi.md#describeTransaction) | **POST** /v1/transaction/{id}/describe | Describe information about a transaction |
 | [**dropNamespace**](MetadataApi.md#dropNamespace) | **POST** /v1/namespace/{id}/drop | Drop a namespace |
 | [**dropTable**](MetadataApi.md#dropTable) | **POST** /v1/table/{id}/drop | Drop a table from its namespace |
 | [**listNamespaces**](MetadataApi.md#listNamespaces) | **POST** /v1/namespace/{id}/list | List namespaces |
 | [**listTableIndices**](MetadataApi.md#listTableIndices) | **POST** /v1/table/{id}/index/list | List indexes on a table |
-| [**listTables**](MetadataApi.md#listTables) | **POST** /v1/namespace/{id}/list_tables | List tables in a namespace |
+| [**listTables**](MetadataApi.md#listTables) | **POST** /v1/namespace/{id}/table/list | List tables in a namespace |
 | [**namespaceExists**](MetadataApi.md#namespaceExists) | **POST** /v1/namespace/{id}/exists | Check if a namespace exists |
 | [**registerTable**](MetadataApi.md#registerTable) | **POST** /v1/table/{id}/register | Register a table to a namespace |
 | [**tableExists**](MetadataApi.md#tableExists) | **POST** /v1/table/{id}/exists | Check if a table exists |
@@ -98,82 +94,6 @@ No authorization required
 | **403** | Forbidden. Authenticated user does not have the necessary permissions. |  -  |
 | **404** | A server-side problem that means can not find the specified resource. |  -  |
 | **409** | The request conflicts with the current state of the target resource. |  -  |
-| **503** | The service is not ready to handle the request. The client should wait and retry. The service may additionally send a Retry-After header to indicate when to retry. |  -  |
-| **5XX** | A server-side problem that might not be addressable from the client side. Used for server 5xx errors without more specific documentation in individual routes. |  -  |
-
-
-## countTableRows
-
-> Long countTableRows(id, countTableRowsRequest, delimiter)
-
-Count rows in a table
-
-Count the number of rows in a table. 
-
-### Example
-
-```java
-// Import classes:
-import com.lancedb.lance.namespace.client.apache.ApiClient;
-import com.lancedb.lance.namespace.client.apache.ApiException;
-import com.lancedb.lance.namespace.client.apache.Configuration;
-import com.lancedb.lance.namespace.client.apache.models.*;
-import com.lancedb.lance.namespace.client.apache.api.MetadataApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:2333");
-
-        MetadataApi apiInstance = new MetadataApi(defaultClient);
-        String id = "id_example"; // String | `string identifier` of an object in a namespace, following the Lance Namespace spec. When the value is equal to the delimiter, it represents the root namespace. For example, `v1/namespace/./list` performs a `ListNamespace` on the root namespace. 
-        CountTableRowsRequest countTableRowsRequest = new CountTableRowsRequest(); // CountTableRowsRequest | 
-        String delimiter = "delimiter_example"; // String | An optional delimiter of the `string identifier`, following the Lance Namespace spec. When not specified, the `.` delimiter must be used. 
-        try {
-            Long result = apiInstance.countTableRows(id, countTableRowsRequest, delimiter);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling MetadataApi#countTableRows");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **id** | **String**| &#x60;string identifier&#x60; of an object in a namespace, following the Lance Namespace spec. When the value is equal to the delimiter, it represents the root namespace. For example, &#x60;v1/namespace/./list&#x60; performs a &#x60;ListNamespace&#x60; on the root namespace.  | |
-| **countTableRowsRequest** | [**CountTableRowsRequest**](CountTableRowsRequest.md)|  | |
-| **delimiter** | **String**| An optional delimiter of the &#x60;string identifier&#x60;, following the Lance Namespace spec. When not specified, the &#x60;.&#x60; delimiter must be used.  | [optional] |
-
-### Return type
-
-**Long**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: application/json
-- **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Result of counting rows in a table |  -  |
-| **400** | Indicates a bad request error. It could be caused by an unexpected request body format or other forms of request validation failure, such as invalid json. Usually serves application/json content, although in some cases simple text/plain content might be returned by the server&#39;s middleware. |  -  |
-| **401** | Unauthorized. The request lacks valid authentication credentials for the operation. |  -  |
-| **403** | Forbidden. Authenticated user does not have the necessary permissions. |  -  |
-| **404** | A server-side problem that means can not find the specified resource. |  -  |
 | **503** | The service is not ready to handle the request. The client should wait and retry. The service may additionally send a Retry-After header to indicate when to retry. |  -  |
 | **5XX** | A server-side problem that might not be addressable from the client side. Used for server 5xx errors without more specific documentation in individual routes. |  -  |
 
@@ -256,87 +176,13 @@ No authorization required
 | **5XX** | A server-side problem that might not be addressable from the client side. Used for server 5xx errors without more specific documentation in individual routes. |  -  |
 
 
-## createTable
-
-> CreateTableResponse createTable(id, body)
-
-Create a table with the given name
-
-Create a new table in the namespace. Supports both lance-namespace format (with namespace in body) and LanceDB format (with database in headers). 
-
-### Example
-
-```java
-// Import classes:
-import com.lancedb.lance.namespace.client.apache.ApiClient;
-import com.lancedb.lance.namespace.client.apache.ApiException;
-import com.lancedb.lance.namespace.client.apache.Configuration;
-import com.lancedb.lance.namespace.client.apache.models.*;
-import com.lancedb.lance.namespace.client.apache.api.MetadataApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:2333");
-
-        MetadataApi apiInstance = new MetadataApi(defaultClient);
-        String id = "id_example"; // String | `string identifier` of an object in a namespace, following the Lance Namespace spec. When the value is equal to the delimiter, it represents the root namespace. For example, `v1/namespace/./list` performs a `ListNamespace` on the root namespace. 
-        byte[] body = null; // byte[] | Arrow IPC data
-        try {
-            CreateTableResponse result = apiInstance.createTable(id, body);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling MetadataApi#createTable");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **id** | **String**| &#x60;string identifier&#x60; of an object in a namespace, following the Lance Namespace spec. When the value is equal to the delimiter, it represents the root namespace. For example, &#x60;v1/namespace/./list&#x60; performs a &#x60;ListNamespace&#x60; on the root namespace.  | |
-| **body** | **byte[]**| Arrow IPC data | |
-
-### Return type
-
-[**CreateTableResponse**](CreateTableResponse.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: application/x-arrow-ipc
-- **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Table properties result when creating a table |  -  |
-| **400** | Indicates a bad request error. It could be caused by an unexpected request body format or other forms of request validation failure, such as invalid json. Usually serves application/json content, although in some cases simple text/plain content might be returned by the server&#39;s middleware. |  -  |
-| **401** | Unauthorized. The request lacks valid authentication credentials for the operation. |  -  |
-| **403** | Forbidden. Authenticated user does not have the necessary permissions. |  -  |
-| **404** | A server-side problem that means can not find the specified resource. |  -  |
-| **503** | The service is not ready to handle the request. The client should wait and retry. The service may additionally send a Retry-After header to indicate when to retry. |  -  |
-| **5XX** | A server-side problem that might not be addressable from the client side. Used for server 5xx errors without more specific documentation in individual routes. |  -  |
-
-
 ## createTableIndex
 
-> CreateTableIndexResponse createTableIndex(id, createTableIndexRequest)
+> CreateTableIndexResponse createTableIndex(id, createTableIndexRequest, delimiter)
 
 Create an index on a table
 
-Create an index on a table column for faster search operations. Supports vector indexes (IVF_FLAT, IVF_HNSW_SQ, IVF_PQ) and scalar indexes. Index creation is handled asynchronously.  Use the &#x60;listIndices&#x60; and &#x60;getIndexStats&#x60; operations to monitor index creation progress. 
+Create an index on a table column for faster search operations. Supports vector indexes (IVF_FLAT, IVF_HNSW_SQ, IVF_PQ, etc.) and scalar indexes (BTREE, BITMAP, FTS, etc.). Index creation is handled asynchronously.  Use the &#x60;ListTableIndices&#x60; and &#x60;DescribeTableIndexStats&#x60; operations to monitor index creation progress. 
 
 ### Example
 
@@ -356,8 +202,9 @@ public class Example {
         MetadataApi apiInstance = new MetadataApi(defaultClient);
         String id = "id_example"; // String | `string identifier` of an object in a namespace, following the Lance Namespace spec. When the value is equal to the delimiter, it represents the root namespace. For example, `v1/namespace/./list` performs a `ListNamespace` on the root namespace. 
         CreateTableIndexRequest createTableIndexRequest = new CreateTableIndexRequest(); // CreateTableIndexRequest | Index creation request
+        String delimiter = "delimiter_example"; // String | An optional delimiter of the `string identifier`, following the Lance Namespace spec. When not specified, the `.` delimiter must be used. 
         try {
-            CreateTableIndexResponse result = apiInstance.createTableIndex(id, createTableIndexRequest);
+            CreateTableIndexResponse result = apiInstance.createTableIndex(id, createTableIndexRequest, delimiter);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling MetadataApi#createTableIndex");
@@ -377,6 +224,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **id** | **String**| &#x60;string identifier&#x60; of an object in a namespace, following the Lance Namespace spec. When the value is equal to the delimiter, it represents the root namespace. For example, &#x60;v1/namespace/./list&#x60; performs a &#x60;ListNamespace&#x60; on the root namespace.  | |
 | **createTableIndexRequest** | [**CreateTableIndexRequest**](CreateTableIndexRequest.md)| Index creation request | |
+| **delimiter** | **String**| An optional delimiter of the &#x60;string identifier&#x60;, following the Lance Namespace spec. When not specified, the &#x60;.&#x60; delimiter must be used.  | [optional] |
 
 ### Return type
 
@@ -396,80 +244,6 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Index created successfully |  -  |
-| **400** | Indicates a bad request error. It could be caused by an unexpected request body format or other forms of request validation failure, such as invalid json. Usually serves application/json content, although in some cases simple text/plain content might be returned by the server&#39;s middleware. |  -  |
-| **401** | Unauthorized. The request lacks valid authentication credentials for the operation. |  -  |
-| **403** | Forbidden. Authenticated user does not have the necessary permissions. |  -  |
-| **404** | A server-side problem that means can not find the specified resource. |  -  |
-| **503** | The service is not ready to handle the request. The client should wait and retry. The service may additionally send a Retry-After header to indicate when to retry. |  -  |
-| **5XX** | A server-side problem that might not be addressable from the client side. Used for server 5xx errors without more specific documentation in individual routes. |  -  |
-
-
-## createTableScalarIndex
-
-> CreateTableIndexResponse createTableScalarIndex(id, createTableIndexRequest)
-
-Create a scalar index on a table
-
-Create a scalar index on a table column for faster search operations. Supports scalar indexes (BTREE, BITMAP, LABEL_LIST). 
-
-### Example
-
-```java
-// Import classes:
-import com.lancedb.lance.namespace.client.apache.ApiClient;
-import com.lancedb.lance.namespace.client.apache.ApiException;
-import com.lancedb.lance.namespace.client.apache.Configuration;
-import com.lancedb.lance.namespace.client.apache.models.*;
-import com.lancedb.lance.namespace.client.apache.api.MetadataApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:2333");
-
-        MetadataApi apiInstance = new MetadataApi(defaultClient);
-        String id = "id_example"; // String | `string identifier` of an object in a namespace, following the Lance Namespace spec. When the value is equal to the delimiter, it represents the root namespace. For example, `v1/namespace/./list` performs a `ListNamespace` on the root namespace. 
-        CreateTableIndexRequest createTableIndexRequest = new CreateTableIndexRequest(); // CreateTableIndexRequest | Scalar index creation request
-        try {
-            CreateTableIndexResponse result = apiInstance.createTableScalarIndex(id, createTableIndexRequest);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling MetadataApi#createTableScalarIndex");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **id** | **String**| &#x60;string identifier&#x60; of an object in a namespace, following the Lance Namespace spec. When the value is equal to the delimiter, it represents the root namespace. For example, &#x60;v1/namespace/./list&#x60; performs a &#x60;ListNamespace&#x60; on the root namespace.  | |
-| **createTableIndexRequest** | [**CreateTableIndexRequest**](CreateTableIndexRequest.md)| Scalar index creation request | |
-
-### Return type
-
-[**CreateTableIndexResponse**](CreateTableIndexResponse.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: application/json
-- **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Scalar index created successfully |  -  |
 | **400** | Indicates a bad request error. It could be caused by an unexpected request body format or other forms of request validation failure, such as invalid json. Usually serves application/json content, although in some cases simple text/plain content might be returned by the server&#39;s middleware. |  -  |
 | **401** | Unauthorized. The request lacks valid authentication credentials for the operation. |  -  |
 | **403** | Forbidden. Authenticated user does not have the necessary permissions. |  -  |
@@ -708,9 +482,9 @@ No authorization required
 
 ## describeTableIndexStats
 
-> DescribeTableIndexStatsResponse describeTableIndexStats(id, indexName, describeTableIndexStatsRequest)
+> DescribeTableIndexStatsResponse describeTableIndexStats(id, indexName, describeTableIndexStatsRequest, delimiter)
 
-Get index statistics
+Get table index statistics
 
 Get statistics for a specific index on a table. Returns information about the index type, distance type (for vector indices), and row counts. 
 
@@ -733,8 +507,9 @@ public class Example {
         String id = "id_example"; // String | `string identifier` of an object in a namespace, following the Lance Namespace spec. When the value is equal to the delimiter, it represents the root namespace. For example, `v1/namespace/./list` performs a `ListNamespace` on the root namespace. 
         String indexName = "indexName_example"; // String | Name of the index to get stats for
         DescribeTableIndexStatsRequest describeTableIndexStatsRequest = new DescribeTableIndexStatsRequest(); // DescribeTableIndexStatsRequest | Index stats request
+        String delimiter = "delimiter_example"; // String | An optional delimiter of the `string identifier`, following the Lance Namespace spec. When not specified, the `.` delimiter must be used. 
         try {
-            DescribeTableIndexStatsResponse result = apiInstance.describeTableIndexStats(id, indexName, describeTableIndexStatsRequest);
+            DescribeTableIndexStatsResponse result = apiInstance.describeTableIndexStats(id, indexName, describeTableIndexStatsRequest, delimiter);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling MetadataApi#describeTableIndexStats");
@@ -755,6 +530,7 @@ public class Example {
 | **id** | **String**| &#x60;string identifier&#x60; of an object in a namespace, following the Lance Namespace spec. When the value is equal to the delimiter, it represents the root namespace. For example, &#x60;v1/namespace/./list&#x60; performs a &#x60;ListNamespace&#x60; on the root namespace.  | |
 | **indexName** | **String**| Name of the index to get stats for | |
 | **describeTableIndexStatsRequest** | [**DescribeTableIndexStatsRequest**](DescribeTableIndexStatsRequest.md)| Index stats request | |
+| **delimiter** | **String**| An optional delimiter of the &#x60;string identifier&#x60;, following the Lance Namespace spec. When not specified, the &#x60;.&#x60; delimiter must be used.  | [optional] |
 
 ### Return type
 
@@ -774,82 +550,6 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Index statistics |  -  |
-| **400** | Indicates a bad request error. It could be caused by an unexpected request body format or other forms of request validation failure, such as invalid json. Usually serves application/json content, although in some cases simple text/plain content might be returned by the server&#39;s middleware. |  -  |
-| **401** | Unauthorized. The request lacks valid authentication credentials for the operation. |  -  |
-| **403** | Forbidden. Authenticated user does not have the necessary permissions. |  -  |
-| **404** | A server-side problem that means can not find the specified resource. |  -  |
-| **503** | The service is not ready to handle the request. The client should wait and retry. The service may additionally send a Retry-After header to indicate when to retry. |  -  |
-| **5XX** | A server-side problem that might not be addressable from the client side. Used for server 5xx errors without more specific documentation in individual routes. |  -  |
-
-
-## describeTableV2
-
-> DescribeTableResponseV2 describeTableV2(id, describeTableRequestV2, delimiter)
-
-Describe a table from the namespace
-
-Get a table&#39;s detailed information under a specified namespace. 
-
-### Example
-
-```java
-// Import classes:
-import com.lancedb.lance.namespace.client.apache.ApiClient;
-import com.lancedb.lance.namespace.client.apache.ApiException;
-import com.lancedb.lance.namespace.client.apache.Configuration;
-import com.lancedb.lance.namespace.client.apache.models.*;
-import com.lancedb.lance.namespace.client.apache.api.MetadataApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:2333");
-
-        MetadataApi apiInstance = new MetadataApi(defaultClient);
-        String id = "id_example"; // String | `string identifier` of an object in a namespace, following the Lance Namespace spec. When the value is equal to the delimiter, it represents the root namespace. For example, `v1/namespace/./list` performs a `ListNamespace` on the root namespace. 
-        DescribeTableRequestV2 describeTableRequestV2 = new DescribeTableRequestV2(); // DescribeTableRequestV2 | 
-        String delimiter = "delimiter_example"; // String | An optional delimiter of the `string identifier`, following the Lance Namespace spec. When not specified, the `.` delimiter must be used. 
-        try {
-            DescribeTableResponseV2 result = apiInstance.describeTableV2(id, describeTableRequestV2, delimiter);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling MetadataApi#describeTableV2");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **id** | **String**| &#x60;string identifier&#x60; of an object in a namespace, following the Lance Namespace spec. When the value is equal to the delimiter, it represents the root namespace. For example, &#x60;v1/namespace/./list&#x60; performs a &#x60;ListNamespace&#x60; on the root namespace.  | |
-| **describeTableRequestV2** | [**DescribeTableRequestV2**](DescribeTableRequestV2.md)|  | |
-| **delimiter** | **String**| An optional delimiter of the &#x60;string identifier&#x60;, following the Lance Namespace spec. When not specified, the &#x60;.&#x60; delimiter must be used.  | [optional] |
-
-### Return type
-
-[**DescribeTableResponseV2**](DescribeTableResponseV2.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: application/json
-- **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Table properties result when loading a table |  -  |
 | **400** | Indicates a bad request error. It could be caused by an unexpected request body format or other forms of request validation failure, such as invalid json. Usually serves application/json content, although in some cases simple text/plain content might be returned by the server&#39;s middleware. |  -  |
 | **401** | Unauthorized. The request lacks valid authentication credentials for the operation. |  -  |
 | **403** | Forbidden. Authenticated user does not have the necessary permissions. |  -  |
@@ -1166,7 +866,7 @@ No authorization required
 
 ## listTableIndices
 
-> ListTableIndicesResponse listTableIndices(id, listTableIndicesRequest)
+> ListTableIndicesResponse listTableIndices(id, listTableIndicesRequest, delimiter)
 
 List indexes on a table
 
@@ -1190,8 +890,9 @@ public class Example {
         MetadataApi apiInstance = new MetadataApi(defaultClient);
         String id = "id_example"; // String | `string identifier` of an object in a namespace, following the Lance Namespace spec. When the value is equal to the delimiter, it represents the root namespace. For example, `v1/namespace/./list` performs a `ListNamespace` on the root namespace. 
         ListTableIndicesRequest listTableIndicesRequest = new ListTableIndicesRequest(); // ListTableIndicesRequest | Index list request
+        String delimiter = "delimiter_example"; // String | An optional delimiter of the `string identifier`, following the Lance Namespace spec. When not specified, the `.` delimiter must be used. 
         try {
-            ListTableIndicesResponse result = apiInstance.listTableIndices(id, listTableIndicesRequest);
+            ListTableIndicesResponse result = apiInstance.listTableIndices(id, listTableIndicesRequest, delimiter);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling MetadataApi#listTableIndices");
@@ -1211,6 +912,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **id** | **String**| &#x60;string identifier&#x60; of an object in a namespace, following the Lance Namespace spec. When the value is equal to the delimiter, it represents the root namespace. For example, &#x60;v1/namespace/./list&#x60; performs a &#x60;ListNamespace&#x60; on the root namespace.  | |
 | **listTableIndicesRequest** | [**ListTableIndicesRequest**](ListTableIndicesRequest.md)| Index list request | |
+| **delimiter** | **String**| An optional delimiter of the &#x60;string identifier&#x60;, following the Lance Namespace spec. When not specified, the &#x60;.&#x60; delimiter must be used.  | [optional] |
 
 ### Return type
 
