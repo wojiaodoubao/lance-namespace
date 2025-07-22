@@ -60,7 +60,7 @@ jobs:
         run: |
           ./mvnw --batch-mode -DskipTests package
 
-      - name: Publish with Java 8
+      - name: Java Publish
         if: |
           (github.event_name == 'release' && github.event.action == 'released') ||
           (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'release')
