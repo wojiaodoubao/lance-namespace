@@ -1875,6 +1875,8 @@ components:
         version: 0
         properties:
           key: properties
+        storage_options:
+          key: storage_options
       properties:
         version:
           format: int64
@@ -1887,6 +1889,13 @@ components:
         properties:
           additionalProperties:
             type: string
+        storage_options:
+          additionalProperties:
+            type: string
+          description: |
+            Configuration options to be used to access storage. The available
+            options depend on the type of storage in use. These will be
+            passed directly to Lance to initialize storage access.
       required:
       - location
       - schema
@@ -2679,6 +2688,8 @@ components:
         location: location
         properties:
           key: properties
+        storage_options:
+          key: storage_options
       properties:
         name:
           type: string
@@ -2691,6 +2702,13 @@ components:
         properties:
           additionalProperties:
             type: string
+        storage_options:
+          additionalProperties:
+            type: string
+          description: |
+            Configuration options to be used to access storage. The available
+            options depend on the type of storage in use. These will be
+            passed directly to Lance to initialize storage access.
       required:
       - location
       - name

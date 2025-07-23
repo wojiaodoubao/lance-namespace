@@ -17,7 +17,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
@@ -30,7 +30,8 @@ class CreateTableResponse(BaseModel):
     namespace: List[StrictStr]
     location: StrictStr
     properties: Optional[Dict[str, StrictStr]] = None
-    __properties: ClassVar[List[str]] = ["name", "namespace", "location", "properties"]
+    storage_options: Optional[Dict[str, StrictStr]] = Field(default=None, description="Configuration options to be used to access storage. The available options depend on the type of storage in use. These will be passed directly to Lance to initialize storage access. ")
+    __properties: ClassVar[List[str]] = ["name", "namespace", "location", "properties", "storage_options"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -86,7 +87,8 @@ class CreateTableResponse(BaseModel):
             "name": obj.get("name"),
             "namespace": obj.get("namespace"),
             "location": obj.get("location"),
-            "properties": obj.get("properties")
+            "properties": obj.get("properties"),
+            "storage_options": obj.get("storage_options")
         })
         return _obj
 
