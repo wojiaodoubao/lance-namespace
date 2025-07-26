@@ -178,7 +178,7 @@ public class LocalHiveMetastore {
 
       this.clientPool = new HiveClientPool(1, hiveConf);
     } catch (Exception e) {
-      throw new RuntimeException("Cannot start TestHiveMetastore", e);
+      throw new RuntimeException("Cannot start LocalHiveMetastore", e);
     }
   }
 

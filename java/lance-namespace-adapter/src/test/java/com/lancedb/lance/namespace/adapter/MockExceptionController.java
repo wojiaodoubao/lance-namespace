@@ -23,11 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class MockExceptionController {
   @GetMapping("/testNotFound")
   public String testNotFound(@RequestParam(required = false) String param) {
-    String type = "Mock resource not found";
-    String error = "Not found Error";
+    String error = "Mock resource not found";
+    String type = "Not found Error";
     String instance = "/v1/namespaces";
     String detail = String.format("%s not found", param);
-    throw LanceNamespaceException.notFound(type, error, instance, detail);
+    throw LanceNamespaceException.notFound(error, type, instance, detail);
   }
 
   @GetMapping("/testInternalError")

@@ -13,8 +13,11 @@
  */
 package com.lancedb.lance.namespace.hive;
 
+import com.lancedb.lance.namespace.LanceNamespace;
+import com.lancedb.lance.namespace.LanceNamespaceException;
 import com.lancedb.lance.namespace.LanceNamespaces;
 import com.lancedb.lance.namespace.ObjectIdentifier;
+import com.lancedb.lance.namespace.model.CreateNamespaceRequest;
 import com.lancedb.lance.namespace.model.ListNamespacesRequest;
 import com.lancedb.lance.namespace.model.ListNamespacesResponse;
 
@@ -215,6 +218,91 @@ public class TestHiveNamespace {
     assertThrows(IllegalArgumentException.class, () -> namespace.listNamespaces(request));
     request.setLimit(-1);
     assertThrows(IllegalArgumentException.class, () -> namespace.listNamespaces(request));
+  }
+
+  @Test
+  public void testCreateNamespaceV3() {
+    assumeTrue(HiveVersion.version() == HiveVersion.V3);
+
+    HiveConf hiveConf = metastore.hiveConf();
+    HiveNamespace namespace =
+        (HiveNamespace) LanceNamespaces.create("hive", Maps.newHashMap(), hiveConf);
+
+    testCreateCatalog(namespace);
+
+    testCreateDatabase(namespace);
+  }
+
+  private void testCreateCatalog(LanceNamespace namespace) {
+    // Case 1: Invalid id
+    CreateNamespaceRequest request = new CreateNamespaceRequest();
+    request.setId(Lists.list(""));
+    assertThrows(IllegalArgumentException.class, () -> namespace.createNamespace(request));
+
+    request.setId(Lists.list("catalog", "db", "table"));
+    assertThrows(IllegalArgumentException.class, () -> namespace.createNamespace(request));
+
+    // Case 2: No location when create catalog
+    request.setId(Lists.list("cat"));
+    request.setMode(CreateNamespaceRequest.ModeEnum.CREATE);
+    assertThrows(IllegalArgumentException.class, () -> namespace.createNamespace(request));
+
+    // Case 3: Create catalog
+    Map<String, String> properties = Maps.newHashMap();
+    properties.put(HiveNamespaceConfig.CATALOG_LOCATION_URI, "file:///tmp/cat");
+    request.setProperties(properties);
+    namespace.createNamespace(request);
+
+    // Case 4: Create catalog while already exist
+    Exception error =
+        assertThrows(LanceNamespaceException.class, () -> namespace.createNamespace(request));
+    assertTrue(error.getMessage().contains("Catalog cat already exist"));
+
+    // Case 5: Ignore exist catalog
+    request.setMode(CreateNamespaceRequest.ModeEnum.EXIST_OK);
+    namespace.createNamespace(request);
+
+    // Case 6: Overwrite exist catalog
+    request.setMode(CreateNamespaceRequest.ModeEnum.OVERWRITE);
+    namespace.createNamespace(request);
+  }
+
+  private void testCreateDatabase(LanceNamespace namespace) {
+    // Case 1: Unknown catalog
+    CreateNamespaceRequest request = new CreateNamespaceRequest();
+    request.setId(Lists.list("cat_catalog", "db"));
+    Exception error =
+        assertThrows(LanceNamespaceException.class, () -> namespace.createNamespace(request));
+    assertTrue(error.getMessage().contains("Catalog cat_catalog doesn't exist"));
+
+    // Case 2: Create database with default location
+    Map<String, String> properties = Maps.newHashMap();
+    properties.put(HiveNamespaceConfig.CATALOG_LOCATION_URI, "file:///tmp/cat");
+    request.setProperties(properties);
+    request.setId(Lists.list("cat"));
+    request.setMode(CreateNamespaceRequest.ModeEnum.EXIST_OK);
+    namespace.createNamespace(request);
+
+    request.setId(Lists.list("cat", "db"));
+    request.setMode(CreateNamespaceRequest.ModeEnum.CREATE);
+    Map<String, String> respProperties = namespace.createNamespace(request).getProperties();
+    assertEquals(
+        "file:///tmp/cat/db", respProperties.get(HiveNamespaceConfig.DATABASE_LOCATION_URI));
+
+    // Case 3: Create database while already exist
+    error = assertThrows(LanceNamespaceException.class, () -> namespace.createNamespace(request));
+    assertTrue(error.getMessage().contains("Database cat.db already exist"));
+
+    // Case 4: Ignore exist database
+    request.setMode(CreateNamespaceRequest.ModeEnum.EXIST_OK);
+    namespace.createNamespace(request);
+
+    // Case 5: Overwrite exist catalog
+    properties.put(HiveNamespaceConfig.DATABASE_LOCATION_URI, "file:///tmp/mycat/db");
+    request.setMode(CreateNamespaceRequest.ModeEnum.OVERWRITE);
+    respProperties = namespace.createNamespace(request).getProperties();
+    assertEquals(
+        "file:///tmp/mycat/db", respProperties.get(HiveNamespaceConfig.DATABASE_LOCATION_URI));
   }
 
   private static void initNamespaces(Map<String, Map<String, Set<String>>> namespaces)
