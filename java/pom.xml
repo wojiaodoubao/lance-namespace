@@ -7,7 +7,7 @@
 
     <groupId>com.lancedb</groupId>
     <artifactId>lance-namespace-root</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.4</version>
     <packaging>pom</packaging>
 
     <name>${project.artifactId}</name>
@@ -55,7 +55,7 @@
     </distributionManagement>
 
     <properties>
-        <lance-namespace.version>0.0.3</lance-namespace.version>
+        <lance-namespace.version>0.0.4</lance-namespace.version>
         <arrow.version>15.0.0</arrow.version>
         <springboot.version>2.7.18</springboot.version>
         <junit-version>5.8.2</junit-version>
@@ -102,11 +102,23 @@
                 <groupId>org.apache.arrow</groupId>
                 <artifactId>arrow-vector</artifactId>
                 <version>${arrow.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.arrow</groupId>
                 <artifactId>arrow-memory-netty</artifactId>
                 <version>${arrow.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
@@ -126,6 +138,11 @@
     </dependencyManagement>
 
     <build>
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+            </testResource>
+        </testResources>
         <plugins>
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
