@@ -22,7 +22,6 @@ import org.apache.hadoop.hive.metastore.api.Catalog;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.PrincipalType;
-import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.thrift.TException;
 
@@ -89,21 +88,6 @@ public class HiveUtil {
     }
   }
 
-  public static Table getTableOrNull(
-      HiveClientPool clientPool, String catalog, String db, String table) {
-    try {
-      return clientPool.run(client -> client.getTable(catalog, db, table));
-    } catch (NoSuchObjectException e) {
-      return null;
-    } catch (TException | InterruptedException e) {
-      if (e instanceof InterruptedException) {
-        Thread.currentThread().interrupt();
-      }
-      throw LanceNamespaceException.serviceUnavailable(
-          e.getMessage(), HiveMetaStoreError.getType(), "", CommonUtil.formatCurrentStackTrace());
-    }
-  }
-
   public static void setDatabaseProperties(
       Database database,
       Supplier<String> warehouseLocation,
@@ -144,15 +128,7 @@ public class HiveUtil {
   }
 
   public static String databaseLocation(String warehouse, String dbName) {
-    if (!warehouse.endsWith("://")) {
-      int end = warehouse.length();
-      while (end > 0 && warehouse.charAt(end - 1) == '/') {
-        end--;
-      }
-      warehouse = warehouse.substring(0, end);
-    }
-
-    return String.format("%s/%s", warehouse, dbName);
+    return String.format("%s/%s", CommonUtil.makeQualified(warehouse), dbName);
   }
 
   public static String hadoopUser() {

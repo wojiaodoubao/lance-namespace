@@ -15,9 +15,13 @@ package com.lancedb.lance.namespace.util;
 
 import com.google.common.base.Joiner;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 
 public class CommonUtil {
+  private CommonUtil() {}
+
   public static String formatCurrentStackTrace() {
     StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
     return formatStackTrace(stackTrace);
@@ -25,5 +29,24 @@ public class CommonUtil {
 
   public static String formatStackTrace(StackTraceElement[] stackTrace) {
     return Joiner.on("\n\t").join(Arrays.copyOfRange(stackTrace, 1, stackTrace.length));
+  }
+
+  /**
+   * Parse absolute path string into qualified path. Qualified path format is
+   * '{scheme}://{authority}/{path}'.
+   */
+  public static String makeQualified(String absolutePath) {
+    try {
+      URI uri = new URI(absolutePath);
+      ValidationUtil.checkArgument(
+          uri.isAbsolute(), "Couldn't parse %s because it is not absolute.", absolutePath);
+
+      String scheme = uri.getScheme();
+      String authority = uri.getAuthority() == null ? "" : uri.getAuthority();
+      String path = uri.getPath();
+      return String.format("%s://%s%s", scheme, authority, path);
+    } catch (URISyntaxException e) {
+      throw new IllegalArgumentException(String.format("Invalid path %s", absolutePath), e);
+    }
   }
 }
