@@ -56,16 +56,22 @@ import com.lancedb.lance.namespace.model.TableExistsRequest;
 import com.lancedb.lance.namespace.model.UpdateTableRequest;
 import com.lancedb.lance.namespace.model.UpdateTableResponse;
 
+import org.apache.arrow.memory.BufferAllocator;
+
 import java.util.Map;
 
 public interface LanceNamespace {
 
   /**
-   * Initialize namespace with custom configuration properties.
+   * Initialize namespace with custom configuration properties and a BufferAllocator.
    *
-   * @param properties namespace conf properties
+   * <p>Any implementation must have an empty constructor and implement this method to initialize
+   * itself from the config properties and use the provided allocator for Arrow operations.
+   *
+   * @param configProperties namespace conf properties
+   * @param allocator BufferAllocator for Arrow operations
    */
-  default void initialize(Map<String, String> properties) {}
+  void initialize(Map<String, String> configProperties, BufferAllocator allocator);
 
   default ListNamespacesResponse listNamespaces(ListNamespacesRequest request) {
     throw new UnsupportedOperationException("Not supported: listNamespaces");

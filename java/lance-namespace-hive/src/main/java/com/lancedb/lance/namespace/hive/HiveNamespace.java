@@ -23,6 +23,7 @@ import com.lancedb.lance.namespace.util.ValidationUtil;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import org.apache.arrow.memory.BufferAllocator;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.thrift.TException;
@@ -42,13 +43,14 @@ public class HiveNamespace implements LanceNamespace, Configurable<Configuration
   public HiveNamespace() {}
 
   @Override
-  public void initialize(Map<String, String> properties) {
+  public void initialize(Map<String, String> configProperties, BufferAllocator allocator) {
+    // Note: HiveNamespace doesn't use BufferAllocator, parameter ignored
     if (hadoopConf == null) {
       LOG.warn("Hadoop configuration not set, using the default configuration.");
       hadoopConf = new Configuration();
     }
 
-    HiveNamespaceConfig config = new HiveNamespaceConfig(properties);
+    HiveNamespaceConfig config = new HiveNamespaceConfig(configProperties);
     this.clientPool = new HiveClientPool(config.getClientPoolSize(), hadoopConf);
   }
 

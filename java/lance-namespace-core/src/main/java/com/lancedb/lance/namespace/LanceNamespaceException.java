@@ -26,6 +26,8 @@ import java.util.Optional;
 public class LanceNamespaceException extends RuntimeException {
   private static final Logger LOG = LoggerFactory.getLogger(LanceNamespaceException.class);
 
+  private final int UNKNOWN_ERROR_CODE = -1;
+
   private final int code;
   private final Optional<ErrorResponse> errorResponse;
 
@@ -53,7 +55,7 @@ public class LanceNamespaceException extends RuntimeException {
 
   public LanceNamespaceException(ErrorResponse errorResponse) {
     super(errorResponse.getError());
-    this.code = 0;
+    this.code = errorResponse.getCode() == null ? UNKNOWN_ERROR_CODE : errorResponse.getCode();
     this.errorResponse = Optional.of(errorResponse);
   }
 
