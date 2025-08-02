@@ -16,17 +16,15 @@ package com.lancedb.lance.namespace.hive;
 import com.lancedb.lance.namespace.Configurable;
 import com.lancedb.lance.namespace.LanceNamespace;
 import com.lancedb.lance.namespace.ObjectIdentifier;
+import com.lancedb.lance.namespace.model.CreateNamespaceRequest;
+import com.lancedb.lance.namespace.model.CreateNamespaceResponse;
 import com.lancedb.lance.namespace.model.ListNamespacesRequest;
 import com.lancedb.lance.namespace.model.ListNamespacesResponse;
 import com.lancedb.lance.namespace.util.PageUtil;
-import com.lancedb.lance.namespace.util.ValidationUtil;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.metastore.IMetaStoreClient;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +37,7 @@ public class HiveNamespace implements LanceNamespace, Configurable<Configuration
 
   private HiveClientPool clientPool;
   private Configuration hadoopConf;
+  private HiveAdapter adapter;
 
   public HiveNamespace() {}
 
@@ -52,21 +51,15 @@ public class HiveNamespace implements LanceNamespace, Configurable<Configuration
 
     HiveNamespaceConfig config = new HiveNamespaceConfig(configProperties);
     this.clientPool = new HiveClientPool(config.getClientPoolSize(), hadoopConf);
+
+    this.adapter = HiveAdapter.create(clientPool, hadoopConf);
   }
 
   @Override
   public ListNamespacesResponse listNamespaces(ListNamespacesRequest request) {
     ObjectIdentifier nsId = ObjectIdentifier.of(request.getId());
 
-    List<String> nss = null;
-    switch (HiveVersion.version()) {
-      case V2:
-        nss = listNamespacesV2(nsId);
-        break;
-      case V3:
-        nss = listNamespacesV3(nsId);
-        break;
-    }
+    List<String> nss = adapter.listNamespaces(nsId);
 
     Collections.sort(nss);
     PageUtil.Page page =
@@ -79,38 +72,17 @@ public class HiveNamespace implements LanceNamespace, Configurable<Configuration
     return response;
   }
 
-  private List<String> listNamespacesV2(ObjectIdentifier nsId) {
-    ValidationUtil.checkArgument(nsId.levels() <= 2, "Expect a 2-level namespace but get %s", nsId);
+  @Override
+  public CreateNamespaceResponse createNamespace(CreateNamespaceRequest request) {
+    ObjectIdentifier id = ObjectIdentifier.of(request.getId());
+    CreateNamespaceRequest.ModeEnum mode = request.getMode();
+    Map<String, String> properties = request.getProperties();
 
-    try {
-      if (nsId.isRoot()) {
-        return clientPool.run(IMetaStoreClient::getAllDatabases);
-      } else {
-        return Lists.newArrayList();
-      }
-    } catch (TException e) {
-      throw new RuntimeException(e);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new RuntimeException(e);
-    }
-  }
+    adapter.createNamespace(id, mode, properties);
 
-  private List<String> listNamespacesV3(ObjectIdentifier parent) {
-    ValidationUtil.checkArgument(
-        parent.levels() <= 3, "Expect a 3-level namespace but get %s", parent);
-
-    try {
-      if (parent.isRoot()) {
-        return clientPool.run(IMetaStoreClient::getCatalogs);
-      } else if (parent.levels() == 2) {
-        return clientPool.run(client -> client.getAllDatabases(parent.level(0)));
-      } else {
-        return Lists.newArrayList();
-      }
-    } catch (TException | InterruptedException e) {
-      throw new RuntimeException(e);
-    }
+    CreateNamespaceResponse response = new CreateNamespaceResponse();
+    response.setProperties(properties);
+    return response;
   }
 
   @Override
