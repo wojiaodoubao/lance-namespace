@@ -34,6 +34,7 @@ import com.lancedb.lance.namespace.model.ListNamespacesResponse;
 import com.lancedb.lance.namespace.model.ListTablesRequest;
 import com.lancedb.lance.namespace.model.ListTablesResponse;
 import com.lancedb.lance.namespace.model.NamespaceExistsRequest;
+import com.lancedb.lance.namespace.model.TableExistsRequest;
 import com.lancedb.lance.namespace.util.JsonArrowSchemaConverter;
 import com.lancedb.lance.namespace.util.OpenDalUtil;
 import com.lancedb.lance.namespace.util.ValidationUtil;
@@ -64,7 +65,8 @@ public class DirectoryNamespace implements LanceNamespace, Closeable {
   public void initialize(Map<String, String> configProperties, BufferAllocator allocator) {
     this.config = new DirectoryNamespaceConfig(configProperties);
     this.allocator = allocator;
-    this.operator = OpenDalUtil.initializeOperator(this.config.getRoot());
+    this.operator =
+        OpenDalUtil.initializeOperator(this.config.getRoot(), this.config.getStorageOptions());
   }
 
   @Override
@@ -123,6 +125,7 @@ public class DirectoryNamespace implements LanceNamespace, Closeable {
     CreateTableResponse response = new CreateTableResponse();
     response.setLocation(tablePath);
     response.setVersion(1L);
+    response.setStorageOptions(config.getStorageOptions());
     return response;
   }
 
@@ -181,6 +184,24 @@ public class DirectoryNamespace implements LanceNamespace, Closeable {
   }
 
   @Override
+  public void tableExists(TableExistsRequest request) {
+    String tableName = tableNameFromId(request.getId());
+
+    LOG.debug("Checking if table {} exists", tableName);
+
+    String versionsPath = tableVersionsPath(tableName);
+    List<Entry> versionEntries =
+        operator.list(versionsPath, ListOptions.builder().limit(1).build());
+    if (versionEntries.isEmpty()) {
+      throw LanceNamespaceException.notFound(
+          "Table does not exist: " + tableName,
+          "TABLE_NOT_FOUND",
+          tableName,
+          "The requested table was not found in the namespace");
+    }
+  }
+
+  @Override
   public DescribeTableResponse describeTable(DescribeTableRequest request) {
     String tableName = tableNameFromId(request.getId());
     String tablePath = tableFullPath(tableName);
@@ -208,6 +229,7 @@ public class DirectoryNamespace implements LanceNamespace, Closeable {
 
     DescribeTableResponse response = new DescribeTableResponse();
     response.setLocation(tablePath);
+    response.setStorageOptions(config.getStorageOptions());
     return response;
   }
 

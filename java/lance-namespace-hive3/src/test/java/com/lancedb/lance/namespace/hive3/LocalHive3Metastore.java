@@ -38,7 +38,7 @@ import java.util.concurrent.Executors;
 import static java.nio.file.Files.createTempDirectory;
 import static java.nio.file.attribute.PosixFilePermissions.asFileAttribute;
 import static java.nio.file.attribute.PosixFilePermissions.fromString;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 // Copied from apache iceberg.
 // https://github.com/apache/iceberg/blob/main/hive-metastore/src/test/java/org/apache/iceberg/hive/TestHiveMetastore.java
@@ -67,7 +67,7 @@ public class LocalHive3Metastore {
                     FileSystem fs = getFs(localDirPath, new Configuration());
                     String errMsg = "Failed to delete " + localDirPath;
                     try {
-                      assertThat(fs.delete(localDirPath, true)).as(errMsg).isTrue();
+                      assertTrue(fs.delete(localDirPath, true));
                     } catch (IOException e) {
                       throw new RuntimeException(errMsg, e);
                     }
@@ -273,5 +273,46 @@ public class LocalHive3Metastore {
     // Always set DataNucleus settings for schema initialization
     conf.set("datanucleus.schema.autoCreateAll", "true");
     conf.set("datanucleus.autoCreateSchema", "true");
+
+    // Disable replication features that require DumpDirCleanerTask
+    conf.set("hive.repl.bootstrap.dump.open.txn.timeout", "0");
+    conf.set("hive.repl.dump.metadata.only.for.external.table", "false");
+    conf.set("hive.in.repl.test", "true");
+
+    // Disable all event listeners and replication functionality
+    conf.set("hive.metastore.event.listeners", "");
+    conf.set("hive.metastore.transactional.event.listeners", "");
+    conf.set("hive.metastore.event.db.listener.timetolive", "0");
+
+    // Disable replication by setting related configs to temp directories to avoid Path creation
+    // errors
+    String tempDir = System.getProperty("java.io.tmpdir");
+    conf.set("hive.repl.replica.functions.root.dir", tempDir + "/hive-repl-functions");
+    conf.set("hive.repl.rootdir", tempDir + "/hive-repl-root");
+    conf.set("hive.repl.cmrootdir", tempDir + "/hive-repl-cm");
+
+    // Disable cleanup tasks and scheduled operations
+    conf.set("hive.metastore.runworker.in", "false");
+    conf.set("hive.metastore.task.threads.always", "");
+
+    // Disable ACID/transactional features that may trigger replication
+    conf.set("hive.support.concurrency", "false");
+    conf.set("hive.txn.manager", "org.apache.hadoop.hive.ql.lockmgr.DummyTxnManager");
+    conf.set("hive.compactor.initiator.on", "false");
+    conf.set("hive.compactor.worker.threads", "0");
+
+    // Disable notification and event processing
+    conf.set("hive.metastore.notifications.add.thrift.objects", "false");
+    conf.set("hive.metastore.notification.parameters.exclude.patterns", ".*");
+
+    // Disable replication scheduler and related services
+    conf.set("hive.repl.scheduler.enabled", "false");
+    conf.set("hive.exec.post.hooks", "");
+    conf.set("hive.exec.pre.hooks", "");
+    conf.set("hive.exec.failure.hooks", "");
+
+    // Disable stats and related background tasks
+    conf.set("hive.stats.autogather", "false");
+    conf.set("hive.stats.column.autogather", "false");
   }
 }

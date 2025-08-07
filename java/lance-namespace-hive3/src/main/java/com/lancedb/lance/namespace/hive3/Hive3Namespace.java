@@ -23,12 +23,20 @@ import com.lancedb.lance.namespace.model.CreateNamespaceRequest;
 import com.lancedb.lance.namespace.model.CreateNamespaceResponse;
 import com.lancedb.lance.namespace.model.CreateTableRequest;
 import com.lancedb.lance.namespace.model.CreateTableResponse;
+import com.lancedb.lance.namespace.model.DescribeNamespaceRequest;
+import com.lancedb.lance.namespace.model.DescribeNamespaceResponse;
 import com.lancedb.lance.namespace.model.DescribeTableRequest;
 import com.lancedb.lance.namespace.model.DescribeTableResponse;
+import com.lancedb.lance.namespace.model.DropNamespaceRequest;
+import com.lancedb.lance.namespace.model.DropNamespaceResponse;
 import com.lancedb.lance.namespace.model.DropTableRequest;
 import com.lancedb.lance.namespace.model.DropTableResponse;
 import com.lancedb.lance.namespace.model.ListNamespacesRequest;
 import com.lancedb.lance.namespace.model.ListNamespacesResponse;
+import com.lancedb.lance.namespace.model.ListTablesRequest;
+import com.lancedb.lance.namespace.model.ListTablesResponse;
+import com.lancedb.lance.namespace.model.NamespaceExistsRequest;
+import com.lancedb.lance.namespace.model.TableExistsRequest;
 import com.lancedb.lance.namespace.util.CommonUtil;
 import com.lancedb.lance.namespace.util.JsonArrowSchemaConverter;
 import com.lancedb.lance.namespace.util.PageUtil;
@@ -50,6 +58,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -62,9 +71,10 @@ import static com.lancedb.lance.namespace.hive3.Hive3ErrorType.TableNotFound;
 public class Hive3Namespace implements LanceNamespace, Configurable<Configuration> {
   private static final Logger LOG = LoggerFactory.getLogger(Hive3Namespace.class);
 
-  protected Hive3ClientPool clientPool;
-  protected Configuration hadoopConf;
-  protected BufferAllocator allocator;
+  private Hive3ClientPool clientPool;
+  private Configuration hadoopConf;
+  private BufferAllocator allocator;
+  private Hive3NamespaceConfig config;
 
   public Hive3Namespace() {}
 
@@ -76,11 +86,8 @@ public class Hive3Namespace implements LanceNamespace, Configurable<Configuratio
       hadoopConf = new Configuration();
     }
 
-    int poolSize =
-        configProperties.containsKey(Hive3NamespaceConfig.CLIENT_POOL_SIZE)
-            ? Integer.parseInt(configProperties.get(Hive3NamespaceConfig.CLIENT_POOL_SIZE))
-            : Hive3NamespaceConfig.CLIENT_POOL_SIZE_DEFAULT;
-    this.clientPool = new Hive3ClientPool(poolSize, hadoopConf);
+    this.config = new Hive3NamespaceConfig(configProperties);
+    this.clientPool = new Hive3ClientPool(config.getClientPoolSize(), hadoopConf);
   }
 
   @Override
@@ -109,12 +116,177 @@ public class Hive3Namespace implements LanceNamespace, Configurable<Configuratio
     Map<String, String> properties = request.getProperties();
 
     ValidationUtil.checkArgument(
-        !id.isRoot() && id.levels() <= 2, "Expect a 2-level namespace but get %s", id);
+        !id.isRoot() && id.levels() <= 2, "Expect a 3-level namespace but get %s", id);
 
     doCreateNamespace(id, mode, properties);
 
     CreateNamespaceResponse response = new CreateNamespaceResponse();
     response.setProperties(properties);
+    return response;
+  }
+
+  @Override
+  public DescribeNamespaceResponse describeNamespace(DescribeNamespaceRequest request) {
+    ObjectIdentifier id = ObjectIdentifier.of(request.getId());
+
+    ValidationUtil.checkArgument(
+        !id.isRoot() && id.levels() <= 2, "Expect a 2-level namespace but get %s", id);
+
+    DescribeNamespaceResponse response = new DescribeNamespaceResponse();
+    Map<String, String> properties = new HashMap<>();
+
+    if (id.levels() == 1) {
+      String catalog = id.levelAtListPos(0).toLowerCase();
+      Catalog catalogObj = Hive3Util.getCatalogOrNull(clientPool, catalog);
+
+      if (catalogObj == null) {
+        throw LanceNamespaceException.notFound(
+            String.format("Namespace does not exist: %s", id.stringStyleId()),
+            HiveMetaStoreError.getType(),
+            id.stringStyleId(),
+            CommonUtil.formatCurrentStackTrace());
+      }
+
+      if (catalogObj.getDescription() != null) {
+        properties.put("description", catalogObj.getDescription());
+      }
+      if (catalogObj.getLocationUri() != null) {
+        properties.put("catalog.location.uri", catalogObj.getLocationUri());
+      }
+    } else {
+      String catalog = id.levelAtListPos(0).toLowerCase();
+      String db = id.levelAtListPos(1).toLowerCase();
+      Database database = Hive3Util.getDatabaseOrNull(clientPool, catalog, db);
+
+      if (database == null) {
+        throw LanceNamespaceException.notFound(
+            String.format("Namespace does not exist: %s", id.stringStyleId()),
+            HiveMetaStoreError.getType(),
+            id.stringStyleId(),
+            CommonUtil.formatCurrentStackTrace());
+      }
+
+      if (database.getDescription() != null) {
+        properties.put(Hive3NamespaceConfig.DATABASE_DESCRIPTION, database.getDescription());
+      }
+      if (database.getLocationUri() != null) {
+        properties.put(Hive3NamespaceConfig.DATABASE_LOCATION_URI, database.getLocationUri());
+      }
+      if (database.getOwnerName() != null) {
+        properties.put(Hive3NamespaceConfig.DATABASE_OWNER, database.getOwnerName());
+      }
+      if (database.getOwnerType() != null) {
+        properties.put(Hive3NamespaceConfig.DATABASE_OWNER_TYPE, database.getOwnerType().name());
+      }
+
+      if (database.getParameters() != null) {
+        properties.putAll(database.getParameters());
+      }
+    }
+
+    response.setProperties(properties);
+    return response;
+  }
+
+  @Override
+  public void namespaceExists(NamespaceExistsRequest request) {
+    ObjectIdentifier id = ObjectIdentifier.of(request.getId());
+
+    ValidationUtil.checkArgument(
+        !id.isRoot() && id.levels() <= 2, "Expect a 2-level namespace but get %s", id);
+
+    if (id.levels() == 1) {
+      String catalog = id.levelAtListPos(0).toLowerCase();
+      Catalog catalogObj = Hive3Util.getCatalogOrNull(clientPool, catalog);
+
+      if (catalogObj == null) {
+        throw LanceNamespaceException.notFound(
+            String.format("Namespace does not exist: %s", id.stringStyleId()),
+            HiveMetaStoreError.getType(),
+            id.stringStyleId(),
+            CommonUtil.formatCurrentStackTrace());
+      }
+    } else {
+      String catalog = id.levelAtListPos(0).toLowerCase();
+      String db = id.levelAtListPos(1).toLowerCase();
+      Database database = Hive3Util.getDatabaseOrNull(clientPool, catalog, db);
+
+      if (database == null) {
+        throw LanceNamespaceException.notFound(
+            String.format("Namespace does not exist: %s", id.stringStyleId()),
+            HiveMetaStoreError.getType(),
+            id.stringStyleId(),
+            CommonUtil.formatCurrentStackTrace());
+      }
+    }
+  }
+
+  @Override
+  public DropNamespaceResponse dropNamespace(DropNamespaceRequest request) {
+    ObjectIdentifier id = ObjectIdentifier.of(request.getId());
+    DropNamespaceRequest.ModeEnum mode = request.getMode();
+    DropNamespaceRequest.BehaviorEnum behavior = request.getBehavior();
+
+    ValidationUtil.checkArgument(
+        !id.isRoot() && id.levels() <= 2, "Expect a 2-level namespace but get %s", id);
+
+    if (mode == null) {
+      mode = DropNamespaceRequest.ModeEnum.FAIL;
+    }
+    if (behavior == null) {
+      behavior = DropNamespaceRequest.BehaviorEnum.RESTRICT;
+    }
+
+    Map<String, String> properties = doDropNamespace(id, mode, behavior);
+
+    DropNamespaceResponse response = new DropNamespaceResponse();
+    response.setProperties(properties);
+    return response;
+  }
+
+  @Override
+  public void tableExists(TableExistsRequest request) {
+    ObjectIdentifier tableId = ObjectIdentifier.of(request.getId());
+
+    ValidationUtil.checkArgument(
+        tableId.levels() == 3, "Expect 3-level table identifier but get %s", tableId);
+
+    String catalog = tableId.levelAtListPos(0).toLowerCase();
+    String db = tableId.levelAtListPos(1).toLowerCase();
+    String table = tableId.levelAtListPos(2).toLowerCase();
+
+    Optional<Table> hmsTable = Hive3Util.getTable(clientPool, catalog, db, table);
+
+    if (!hmsTable.isPresent()) {
+      throw LanceNamespaceException.notFound(
+          String.format("Table does not exist: %s", tableId.stringStyleId()),
+          TableNotFound.getType(),
+          tableId.stringStyleId(),
+          CommonUtil.formatCurrentStackTrace());
+    }
+
+    Hive3Util.validateLanceTable(hmsTable.get());
+  }
+
+  @Override
+  public ListTablesResponse listTables(ListTablesRequest request) {
+    ObjectIdentifier nsId = ObjectIdentifier.of(request.getId());
+
+    ValidationUtil.checkArgument(
+        !nsId.isRoot() && nsId.levels() == 2, "Expect a 2-level namespace but get %s", nsId);
+
+    String catalog = nsId.levelAtListPos(0).toLowerCase();
+    String db = nsId.levelAtListPos(1).toLowerCase();
+    List<String> tables = doListTables(catalog, db);
+
+    Collections.sort(tables);
+    PageUtil.Page page =
+        PageUtil.splitPage(
+            tables, request.getPageToken(), PageUtil.normalizePageSize(request.getLimit()));
+
+    ListTablesResponse response = new ListTablesResponse();
+    response.setTables(Sets.newHashSet(page.items()));
+    response.setPageToken(page.nextPageToken());
     return response;
   }
 
@@ -148,10 +320,15 @@ public class Hive3Namespace implements LanceNamespace, Configurable<Configuratio
     ValidationUtil.checkArgument(
         tableId.levels() == 3, "Expect 3-level table identifier but get %s", tableId);
 
-    doCreateTable(tableId, schema, request.getLocation(), request.getProperties(), requestData);
+    String location = request.getLocation();
+    if (location == null || location.isEmpty()) {
+      location = getDefaultTableLocation(tableId.levelAtListPos(1), tableId.levelAtListPos(2));
+    }
+
+    doCreateTable(tableId, schema, location, request.getProperties(), requestData);
 
     CreateTableResponse response = new CreateTableResponse();
-    response.setLocation(request.getLocation());
+    response.setLocation(location);
     response.setVersion(1L);
     return response;
   }
@@ -300,10 +477,18 @@ public class Hive3Namespace implements LanceNamespace, Configurable<Configuratio
       }
     }
 
+    // If no location is specified in properties, use root config
+    Map<String, String> dbProperties =
+        new HashMap<>(properties != null ? properties : new HashMap<>());
+    if (!dbProperties.containsKey(Hive3NamespaceConfig.DATABASE_LOCATION_URI)) {
+      String dbLocation = String.format("%s/%s", config.getRoot(), dbName);
+      dbProperties.put(Hive3NamespaceConfig.DATABASE_LOCATION_URI, dbLocation);
+    }
+
     Database database = new Database();
     database.setCatalogName(catalogName);
     database.setName(dbName);
-    Hive3Util.setDatabaseProperties(database, () -> catalog.getLocationUri(), dbName, properties);
+    Hive3Util.setDatabaseProperties(database, () -> catalog.getLocationUri(), dbName, dbProperties);
 
     clientPool.run(
         client -> {
@@ -387,8 +572,64 @@ public class Hive3Namespace implements LanceNamespace, Configurable<Configuratio
 
     if (data != null && data.length > 0) {
       WriteParams writeParams =
-          new WriteParams.Builder().withMode(WriteParams.WriteMode.CREATE).build();
+          new WriteParams.Builder()
+              .withMode(WriteParams.WriteMode.CREATE)
+              .withStorageOptions(config.getStorageOptions())
+              .build();
       Dataset.create(allocator, location, schema, writeParams);
+    }
+  }
+
+  protected List<String> doListTables(String catalog, String db) {
+    try {
+      // First validate that catalog and database exist
+      Catalog catalogObj = Hive3Util.getCatalogOrNull(clientPool, catalog);
+      if (catalogObj == null) {
+        throw LanceNamespaceException.notFound(
+            String.format("Catalog %s doesn't exist", catalog),
+            HiveMetaStoreError.getType(),
+            catalog,
+            CommonUtil.formatCurrentStackTrace());
+      }
+
+      Database database = Hive3Util.getDatabaseOrNull(clientPool, catalog, db);
+      if (database == null) {
+        throw LanceNamespaceException.notFound(
+            String.format("Database %s.%s doesn't exist", catalog, db),
+            HiveMetaStoreError.getType(),
+            String.format("%s.%s", catalog, db),
+            CommonUtil.formatCurrentStackTrace());
+      }
+
+      List<String> allTables = clientPool.run(client -> client.getAllTables(catalog, db));
+      List<String> lanceTables = Lists.newArrayList();
+
+      for (String tableName : allTables) {
+        try {
+          Optional<Table> table = Hive3Util.getTable(clientPool, catalog, db, tableName);
+          if (table.isPresent()) {
+            Map<String, String> params = table.get().getParameters();
+            if (params != null && "lance".equalsIgnoreCase(params.get("table_type"))) {
+              lanceTables.add(tableName);
+            }
+          }
+        } catch (Exception e) {
+          // Skip tables that can't be accessed or validated
+          LOG.warn("Failed to validate table {}.{}.{}: {}", catalog, db, tableName, e.getMessage());
+        }
+      }
+
+      return lanceTables;
+    } catch (TException | InterruptedException e) {
+      if (e instanceof InterruptedException) {
+        Thread.currentThread().interrupt();
+      }
+      String errorMessage = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+      throw LanceNamespaceException.serviceUnavailable(
+          "Failed to list tables: " + errorMessage,
+          HiveMetaStoreError.getType(),
+          "",
+          CommonUtil.formatCurrentStackTrace());
     }
   }
 
@@ -428,5 +669,207 @@ public class Hive3Namespace implements LanceNamespace, Configurable<Configuratio
           id.stringStyleId(),
           CommonUtil.formatCurrentStackTrace());
     }
+  }
+
+  protected Map<String, String> doDropNamespace(
+      ObjectIdentifier id,
+      DropNamespaceRequest.ModeEnum mode,
+      DropNamespaceRequest.BehaviorEnum behavior) {
+
+    try {
+      if (id.levels() == 1) {
+        // Drop catalog
+        return doDropCatalog(id.levelAtListPos(0).toLowerCase(), mode, behavior);
+      } else {
+        // Drop database
+        return doDropDatabase(
+            id.levelAtListPos(0).toLowerCase(), id.levelAtListPos(1).toLowerCase(), mode, behavior);
+      }
+    } catch (TException | InterruptedException e) {
+      if (e instanceof InterruptedException) {
+        Thread.currentThread().interrupt();
+      }
+      String errorMessage = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+      throw LanceNamespaceException.serviceUnavailable(
+          "Failed to drop namespace: " + errorMessage,
+          HiveMetaStoreError.getType(),
+          id.stringStyleId(),
+          CommonUtil.formatCurrentStackTrace());
+    }
+  }
+
+  private Map<String, String> doDropCatalog(
+      String catalog,
+      DropNamespaceRequest.ModeEnum mode,
+      DropNamespaceRequest.BehaviorEnum behavior)
+      throws TException, InterruptedException {
+    Catalog catalogObj = Hive3Util.getCatalogOrNull(clientPool, catalog);
+    if (catalogObj == null) {
+      if (mode == DropNamespaceRequest.ModeEnum.SKIP) {
+        return new HashMap<>();
+      } else {
+        throw LanceNamespaceException.notFound(
+            String.format("Catalog %s doesn't exist", catalog),
+            HiveMetaStoreError.getType(),
+            catalog,
+            CommonUtil.formatCurrentStackTrace());
+      }
+    }
+
+    // Check for child databases
+    List<String> databases = clientPool.run(client -> client.getAllDatabases(catalog));
+    if (!databases.isEmpty()) {
+      if (behavior == DropNamespaceRequest.BehaviorEnum.RESTRICT) {
+        throw LanceNamespaceException.badRequest(
+            String.format(
+                "Catalog %s is not empty. Contains %d databases: %s",
+                catalog, databases.size(), databases),
+            HiveMetaStoreError.getType(),
+            catalog,
+            CommonUtil.formatCurrentStackTrace());
+      } else if (behavior == DropNamespaceRequest.BehaviorEnum.CASCADE) {
+        // Drop all databases first
+        for (String dbName : databases) {
+          try {
+            doDropDatabase(
+                catalog,
+                dbName,
+                DropNamespaceRequest.ModeEnum.FAIL,
+                DropNamespaceRequest.BehaviorEnum.CASCADE);
+            LOG.info("Dropped database {}.{} during CASCADE operation", catalog, dbName);
+          } catch (Exception e) {
+            LOG.warn("Failed to drop database {}.{}: {}", catalog, dbName, e.getMessage());
+            throw LanceNamespaceException.serviceUnavailable(
+                String.format(
+                    "Failed to drop database %s.%s during CASCADE operation: %s",
+                    catalog, dbName, e.getMessage()),
+                HiveMetaStoreError.getType(),
+                String.format("%s.%s", catalog, dbName),
+                CommonUtil.formatCurrentStackTrace());
+          }
+        }
+      }
+    }
+
+    // Collect catalog properties
+    Map<String, String> properties = new HashMap<>();
+    if (catalogObj.getDescription() != null) {
+      properties.put("description", catalogObj.getDescription());
+    }
+    if (catalogObj.getLocationUri() != null) {
+      properties.put("catalog.location.uri", catalogObj.getLocationUri());
+    }
+
+    // Drop the catalog
+    clientPool.run(
+        client -> {
+          client.dropCatalog(catalog);
+          return null;
+        });
+
+    LOG.info("Successfully dropped catalog: {}", catalog);
+    return properties;
+  }
+
+  private Map<String, String> doDropDatabase(
+      String catalog,
+      String db,
+      DropNamespaceRequest.ModeEnum mode,
+      DropNamespaceRequest.BehaviorEnum behavior)
+      throws TException, InterruptedException {
+    Database database = Hive3Util.getDatabaseOrNull(clientPool, catalog, db);
+    if (database == null) {
+      if (mode == DropNamespaceRequest.ModeEnum.SKIP) {
+        return new HashMap<>();
+      } else {
+        throw LanceNamespaceException.notFound(
+            String.format("Database %s.%s doesn't exist", catalog, db),
+            HiveMetaStoreError.getType(),
+            String.format("%s.%s", catalog, db),
+            CommonUtil.formatCurrentStackTrace());
+      }
+    }
+
+    // Check if database contains tables
+    List<String> tables = doListTables(catalog, db);
+    if (!tables.isEmpty()) {
+      if (behavior == DropNamespaceRequest.BehaviorEnum.RESTRICT) {
+        throw LanceNamespaceException.badRequest(
+            String.format(
+                "Database %s.%s is not empty. Contains %d tables: %s",
+                catalog, db, tables.size(), tables),
+            HiveMetaStoreError.getType(),
+            String.format("%s.%s", catalog, db),
+            CommonUtil.formatCurrentStackTrace());
+      } else if (behavior == DropNamespaceRequest.BehaviorEnum.CASCADE) {
+        // Drop all tables first
+        for (String tableName : tables) {
+          try {
+            ObjectIdentifier tableId =
+                ObjectIdentifier.of(Lists.newArrayList(catalog, db, tableName));
+            doDropTable(tableId);
+            LOG.info("Dropped table {}.{}.{} during CASCADE operation", catalog, db, tableName);
+          } catch (Exception e) {
+            LOG.warn("Failed to drop table {}.{}.{}: {}", catalog, db, tableName, e.getMessage());
+            throw LanceNamespaceException.serviceUnavailable(
+                String.format(
+                    "Failed to drop table %s.%s.%s during CASCADE operation: %s",
+                    catalog, db, tableName, e.getMessage()),
+                HiveMetaStoreError.getType(),
+                String.format("%s.%s.%s", catalog, db, tableName),
+                CommonUtil.formatCurrentStackTrace());
+          }
+        }
+      }
+    }
+
+    // Collect database properties
+    Map<String, String> properties = new HashMap<>();
+    if (database.getDescription() != null) {
+      properties.put(Hive3NamespaceConfig.DATABASE_DESCRIPTION, database.getDescription());
+    }
+    if (database.getLocationUri() != null) {
+      properties.put(Hive3NamespaceConfig.DATABASE_LOCATION_URI, database.getLocationUri());
+    }
+    if (database.getOwnerName() != null) {
+      properties.put(Hive3NamespaceConfig.DATABASE_OWNER, database.getOwnerName());
+    }
+    if (database.getOwnerType() != null) {
+      properties.put(Hive3NamespaceConfig.DATABASE_OWNER_TYPE, database.getOwnerType().name());
+    }
+    if (database.getParameters() != null) {
+      properties.putAll(database.getParameters());
+    }
+
+    // Drop the database
+    clientPool.run(
+        client -> {
+          client.dropDatabase(catalog, db, false, true, false);
+          return null;
+        });
+
+    LOG.info("Successfully dropped database: {}.{}", catalog, db);
+    return properties;
+  }
+
+  private String getDefaultTableLocation(String namespaceName, String tableName) {
+    try {
+      // Try to get the database location first
+      Database db = Hive3Util.getDatabaseOrNull(clientPool, namespaceName.toLowerCase());
+      if (db != null && db.getLocationUri() != null && !db.getLocationUri().isEmpty()) {
+        String dbLocation = db.getLocationUri();
+        if (!dbLocation.endsWith("/")) {
+          dbLocation += "/";
+        }
+        return dbLocation + tableName.toLowerCase() + ".lance";
+      }
+    } catch (Exception e) {
+      // Fall back to using root config if database location fails
+      LOG.warn("Failed to get database location for {}, using root config", namespaceName, e);
+    }
+
+    // Use the configured root as fallback
+    return String.format(
+        "%s/%s/%s.lance", config.getRoot(), namespaceName.toLowerCase(), tableName.toLowerCase());
   }
 }
